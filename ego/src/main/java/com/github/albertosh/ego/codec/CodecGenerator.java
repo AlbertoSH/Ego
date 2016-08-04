@@ -2,6 +2,8 @@ package com.github.albertosh.ego.codec;
 
 
 import com.github.albertosh.ego.EgoIgnore;
+import com.github.albertosh.ego.EgoObject;
+import com.github.albertosh.ego.EgoObjectBuilder;
 import com.github.albertosh.ego.builder.BuilderGenerator;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
@@ -10,15 +12,17 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import com.squareup.javapoet.TypeVariableName;
 
 import org.bson.BsonReader;
-import org.bson.BsonType;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Generated;
@@ -46,12 +50,17 @@ public class CodecGenerator {
     private TypeSpec.Builder currentTypeSpec;
     private TypeElement currentClassElement;
     private TypeName currentClassTypeName;
+    private TypeName currentBuilderTypeName;
     private String currentPackage;
+    private final Map<String, ClassName> superClassCodecMap;
 
     public CodecGenerator(Filer filer, Messager messager, Types typeUtils) {
         this.filer = filer;
         this.messager = messager;
         this.types = typeUtils;
+        this.superClassCodecMap = new HashMap<>();
+        ClassName egoClass = ClassName.get(EgoObject.class);
+        superClassCodecMap.put(egoClass.packageName() + "." + egoClass.simpleName(), ClassName.get(EgoCodec.class));
     }
 
     private void warning(String message, Element e) {
@@ -73,15 +82,19 @@ public class CodecGenerator {
         currentTypeSpec = TypeSpec.classBuilder(classElement.getSimpleName() + CODEC_SUFFIX);
         currentClassTypeName = TypeName.get(currentClassElement.asType());
         currentPackage = ((PackageElement)currentClassElement.getEnclosingElement()).getQualifiedName().toString();
+        currentBuilderTypeName = ClassName.get(currentPackage, currentClassElement.getSimpleName() + BuilderGenerator.BUILDER_CLASS_SUFIX);
 
         setClassHeader();
+        addSuperClass();
         addGetEncoderClassMethod();
-        addEncodeMethod();
-        addDecodeMethod();
+        addGetNewBuilder();
+        addEncodeCurrentObject();
+        addDecodeCurrentField();
 
         writeToFile();
 
         currentPackage = null;
+        currentBuilderTypeName = null;
         currentClassTypeName = null;
         currentTypeSpec = null;
         currentClassElement = null;
@@ -94,9 +107,30 @@ public class CodecGenerator {
                                 .addMember("value", "\"Ego\"")
                                 .build());
 
-        ParameterizedTypeName superType = ParameterizedTypeName.get(ClassName.get(Codec.class), currentClassTypeName);
+        ParameterizedTypeName interfaceType = ParameterizedTypeName.get(ClassName.get(Codec.class), currentClassTypeName);
 
-        currentTypeSpec.addSuperinterface(superType);
+        currentTypeSpec.addSuperinterface(interfaceType);
+    }
+
+    private void addSuperClass() {
+        String superClassQuialifiedName = currentClassElement.getSuperclass().toString();
+        ClassName codecSuperClass = getCodecClassForClass(superClassQuialifiedName);
+        ParameterizedTypeName superType = ParameterizedTypeName.get(codecSuperClass, currentClassTypeName);
+        currentTypeSpec.superclass(superType);
+    }
+
+    private void addGetNewBuilder() {
+        MethodSpec getNewBuilderMethod = MethodSpec.methodBuilder("getNewBuilder")
+                .addModifiers(Modifier.PROTECTED)
+                .returns(currentBuilderTypeName)
+                .addAnnotation(Override.class)
+                .addStatement("return new $T()", currentBuilderTypeName)
+                .build();
+        currentTypeSpec.addMethod(getNewBuilderMethod);
+    }
+
+    private ClassName getCodecClassForClass(String superClassQuialifiedName) {
+        return superClassCodecMap.get(superClassQuialifiedName);
     }
 
     private void addGetEncoderClassMethod() {
@@ -112,17 +146,17 @@ public class CodecGenerator {
         currentTypeSpec.addMethod(getEncoderClassMethod);
     }
 
-    private void addEncodeMethod() {
-        MethodSpec.Builder encodeMethod = MethodSpec.methodBuilder("encode")
-                .addModifiers(Modifier.PUBLIC)
+    private void addEncodeCurrentObject() {
+        MethodSpec.Builder encodeMethod = MethodSpec.methodBuilder("encodeCurrentObject")
+                .addModifiers(Modifier.PROTECTED)
                 .addAnnotation(Override.class)
                 .addParameter(TypeName.get(BsonWriter.class), "writer")
                 .addParameter(currentClassTypeName, "value")
-                .addParameter(TypeName.get(EncoderContext.class), "context");
+                .addParameter(TypeName.get(EncoderContext.class), "context")
+                .addStatement("super.encodeCurrentObject(writer, value, context)");
 
-        encodeMethod.addStatement("writer.writeStartDocument()");
         encodeFields(encodeMethod);
-        encodeMethod.addStatement("writer.writeEndDocument()");
+
         currentTypeSpec.addMethod(encodeMethod.build());
     }
 
@@ -219,33 +253,26 @@ public class CodecGenerator {
         }
     }
 
-    private void addDecodeMethod() {
-        MethodSpec.Builder decodeMethod = MethodSpec.methodBuilder("decode")
-                .returns(currentClassTypeName)
-                .addModifiers(Modifier.PUBLIC)
+    private void addDecodeCurrentField() {
+        ParameterizedTypeName egoBuilderParameterized = ParameterizedTypeName.get(ClassName.get(EgoObjectBuilder.class), currentClassTypeName);
+        TypeVariableName variableBuilder = TypeVariableName.get("B", egoBuilderParameterized);
+        MethodSpec.Builder decodeMethod = MethodSpec.methodBuilder("decodeCurrentField")
+                .addModifiers(Modifier.PROTECTED)
                 .addAnnotation(Override.class)
+                .addTypeVariable(variableBuilder)
                 .addParameter(TypeName.get(BsonReader.class), "reader")
-                .addParameter(TypeName.get(DecoderContext.class), "context");
-
-        TypeName builderType = ClassName.get(currentPackage, currentClassElement.getSimpleName() + BuilderGenerator.BUILDER_CLASS_SUFIX);
-        decodeMethod
-                .addStatement("$T builder = new $T()", builderType, builderType)
-                .addStatement("reader.readStartDocument()")
-        ;
+                .addParameter(TypeName.get(DecoderContext.class), "context")
+                .addParameter(variableBuilder, "builder")
+                .addParameter(String.class, "field");
 
         decodeFields(decodeMethod);
-
-        decodeMethod
-                .addStatement("reader.readEndDocument()")
-                .addStatement("return builder.build()");
 
         currentTypeSpec.addMethod(decodeMethod.build());
     }
 
     private void decodeFields(MethodSpec.Builder decodeMethod) {
         decodeMethod
-                .beginControlFlow("while (reader.readBsonType() != $T.END_OF_DOCUMENT)", ClassName.get(BsonType.class))
-                .addStatement("String field = reader.readName()")
+                .addStatement("$T currentBuilder = ($T) builder", currentBuilderTypeName, currentBuilderTypeName)
                 .beginControlFlow("switch (field)");
 
         for (Element e : currentClassElement.getEnclosedElements()) {
@@ -257,7 +284,10 @@ public class CodecGenerator {
         }
 
         decodeMethod
-                .endControlFlow()
+                .addStatement("default:")
+                .addStatement("super.decodeCurrentField(reader, context, builder, field)");
+
+        decodeMethod
                 .endControlFlow();
     }
 
@@ -267,7 +297,7 @@ public class CodecGenerator {
             String readerMethod = getReaderMethodForType(primitiveType.toString());
             decodeMethod
                     .addStatement("case $S:",field.getSimpleName())
-                    .addStatement("builder.$L("
+                    .addStatement("currentBuilder.$L("
                             + addModifiersForDecode(primitiveType.toString(), readerMethod)
                             + ")", field.getSimpleName())
                     .addStatement("break");
@@ -275,6 +305,7 @@ public class CodecGenerator {
         } catch (ClassCastException | IllegalArgumentException e) {
             error(e.getMessage(), field);
         }
+        // TODO
         /*
         Optional<String> method = methodThatReturnsValue(field);
         if (method.isPresent()) {

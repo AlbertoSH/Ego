@@ -1,6 +1,7 @@
 package com.github.albertosh.ego.builder;
 
 import com.github.albertosh.ego.EgoObject;
+import com.github.albertosh.ego.EgoObjectBuilder;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
@@ -144,7 +145,8 @@ public class BuilderGenerator {
         builder.addTypeVariable(typeVariableName);
         TypeName currentBuilderType = ParameterizedTypeName.get(builderClass, typeVariableName);
 
-        addSuperClass(builder, currentClass, typeVariableName);
+        //addSuperClass(builder, currentClass, typeVariableName);
+        addSuperClass(builder, currentClass, TypeName.get(currentClass.asType()));
 
         MethodSpec.Builder fromPrototypeBuilder = MethodSpec.methodBuilder("fromPrototype")
 //                .addAnnotation(OverridingMethodsMustInvokeSuper.class)
@@ -188,11 +190,11 @@ public class BuilderGenerator {
             TypeName superType = ParameterizedTypeName.get(superBuilderClassName, typeVariableName);
             builder.superclass(superType);
         } else {
-            /*
+
             ClassName builderImplClassName = ClassName.get(EgoObjectBuilder.class);
             ParameterizedTypeName parameterizedBuilder = ParameterizedTypeName.get(builderImplClassName, typeVariableName);
             builder.superclass(parameterizedBuilder);
-            */
+
         }
 
         ClassName builderClassName = ClassName.get(Builder.class);
@@ -363,22 +365,20 @@ public class BuilderGenerator {
         private void fillAssigns(JCTree.JCClassDecl classNode, ListBuffer<JCTree.JCStatement> assigns) {
             Iterator<JCTree> iterator = classNode.getMembers().iterator();
             List<JCTree> members = new ArrayList<JCTree>();
-            iterator.forEachRemaining(new Consumer<JCTree>() {
-                public void accept(JCTree jcTree) {
-                    members.add(jcTree);
-                    if (jcTree.getKind().equals(Tree.Kind.VARIABLE)) {
-                        JCTree.JCVariableDecl var = (JCTree.JCVariableDecl) jcTree;
-                        JCTree.JCFieldAccess thisX = make.Select(make.Ident(names._this), var.getName());
+            iterator.forEachRemaining(jcTree -> {
+                members.add(jcTree);
+                if (jcTree.getKind().equals(Tree.Kind.VARIABLE)) {
+                    JCTree.JCVariableDecl var = (JCTree.JCVariableDecl) jcTree;
+                    JCTree.JCFieldAccess thisX = make.Select(make.Ident(names._this), var.getName());
 
-                        JCTree.JCExpression builder = make.Ident(names.fromString("builder"));
-                        String nameAsString = var.getName().toString();
-                        String methodName = "get" + nameAsString.substring(0, 1).toUpperCase() + nameAsString.substring(1);
-                        JCTree.JCExpression method = make.Select(builder, names.fromString(methodName));
-                        JCTree.JCMethodInvocation invocation = make.Apply(com.sun.tools.javac.util.List.nil(), method, com.sun.tools.javac.util.List.nil());
-                        JCTree.JCExpressionStatement exec = make.Exec(invocation);
-                        JCTree.JCExpression assign = make.Assign(thisX, exec.getExpression());
-                        assigns.append(make.Exec(assign));
-                    }
+                    JCTree.JCExpression builder = make.Ident(names.fromString("builder"));
+                    String nameAsString = var.getName().toString();
+                    String methodName = "get" + nameAsString.substring(0, 1).toUpperCase() + nameAsString.substring(1);
+                    JCTree.JCExpression method = make.Select(builder, names.fromString(methodName));
+                    JCTree.JCMethodInvocation invocation = make.Apply(com.sun.tools.javac.util.List.nil(), method, com.sun.tools.javac.util.List.nil());
+                    JCTree.JCExpressionStatement exec = make.Exec(invocation);
+                    JCTree.JCExpression assign = make.Assign(thisX, exec.getExpression());
+                    assigns.append(make.Exec(assign));
                 }
             });
         }

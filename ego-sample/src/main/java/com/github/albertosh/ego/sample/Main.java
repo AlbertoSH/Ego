@@ -1,5 +1,21 @@
 package com.github.albertosh.ego.sample;
 
+import com.github.albertosh.ego.sample.codecs.SimpleItemEgoCodec;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientOptions;
+
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecRegistries;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.types.ObjectId;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.IsEqual.equalTo;
+
 public class Main {
 
     public static void main(String[] args) {
@@ -16,10 +32,10 @@ public class Main {
                 .build();
         MongoClient client = new MongoClient("localhost:27017", options);
 
-        SimpleItem item = new SimpleItem();
-        item.setB((byte) 1);
-        item.setBool(true);
-        item.setI(3);
+        SimpleItem item = (SimpleItem) new SimpleItemBuilder()
+                .someInt(2)
+                .id(new ObjectId().toString())
+                .build();
 
         client
                 .getDatabase("ego")
@@ -33,6 +49,8 @@ public class Main {
                 .withDocumentClass(SimpleItem.class)
                 .find()
                 .first();
+
+        client.close();
 
         assertThat(item, is(equalTo(recovered)));
 

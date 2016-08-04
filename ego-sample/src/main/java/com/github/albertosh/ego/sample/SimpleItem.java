@@ -11,5 +11,27 @@ public class SimpleItem extends EgoObject {
         return someInt;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
+        SimpleItem that = (SimpleItem) o;
+
+        return someInt == that.someInt;
+
+    }
+
+    @Override
+    public int hashCode() {
+        return someInt;
+    }
+
+    @Override
+    public String toString() {
+        return "SimpleItem{" +
+                "someInt=" + someInt +
+                ", " + super.toString() +
+                '}';
+    }
 }

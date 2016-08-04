@@ -51,7 +51,7 @@ public class Main {
                     .first();
 
             collection.drop();
-            
+
             assertThat(item, is(equalTo(recovered)));
 
             System.out.println("Success!");

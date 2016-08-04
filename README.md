@@ -11,6 +11,20 @@ Compile time generated JavaORM for MongoDB — Edit
 
 ---
 
+## Roadmap
+
+- Builder generation (**Done**)
+- Codec generation (Half done, working on it...)
+- Writer class generation
+- Reader class generation
+- Filters class generation
+- Delete class generation
+- Patchs class generation
+- Update class generation
+
+
+---
+
 ##License
 
     The MIT License

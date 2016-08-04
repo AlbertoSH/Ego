@@ -10,6 +10,8 @@ import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +21,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws NoSuchMethodException {
         System.out.println("Hello!");
 
         List<Codec<?>> codecs = new ArrayList<>();
@@ -57,7 +59,33 @@ public class Main {
             assertThat(item, is(equalTo(recovered)));
 
             System.out.println("Success!");
+        }
 
+        Class<SimpleItem> klass = SimpleItem.class;
+        try {
+            klass.newInstance();
+            throw new IllegalStateException("This was supposes to fail... :(");
+        } catch (InstantiationException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            System.out.println("The constructor has private access it was supposed to ;)\n" + e.getMessage());
+        }
+
+        Constructor<SimpleItem> constructor = klass.getDeclaredConstructor();
+        constructor.setAccessible(true);
+        try {
+            constructor.newInstance();
+            throw new IllegalStateException("This was supposes to fail... :(");
+        } catch (InstantiationException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
+            if (e.getCause().getClass().equals(RuntimeException.class)) {
+                System.out.println("The constructor failed as it was supposed to ;)");
+            } else {
+                throw new RuntimeException(e);
+            }
         }
     }
 }

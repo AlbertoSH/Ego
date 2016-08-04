@@ -9,6 +9,7 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
+import org.junit.Test;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -19,11 +20,39 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 
-public class Main {
+public class SimpleItemTest {
 
-    public static void main(String[] args) throws NoSuchMethodException {
-        System.out.println("Hello!");
+    @Test
+    public void injectedConstructor() throws Exception {
+        Class<SimpleItem> klass = SimpleItem.class;
+        try {
+            klass.newInstance();
+            throw new IllegalStateException("This was supposes to fail... :(");
+        } catch (InstantiationException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            // The constructor has private access it was supposed to ;)
+        }
 
+        Constructor<SimpleItem> constructor = klass.getDeclaredConstructor();
+        constructor.setAccessible(true);
+        try {
+            constructor.newInstance();
+            throw new IllegalStateException("This was supposes to fail... :(");
+        } catch (InstantiationException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
+            if (e.getCause().getClass().equals(RuntimeException.class)) {
+                // The constructor failed as it was supposed to ;)
+            } else {
+                throw new RuntimeException(e);
+            }
+        }
+
+    }
+
+    @Test
+    public void storeAndRecover() throws Exception {
         List<Codec<?>> codecs = new ArrayList<>();
         codecs.add(new SimpleItemEgoCodec());
         CodecRegistry codecRegistry = CodecRegistries.fromRegistries(
@@ -57,35 +86,6 @@ public class Main {
             collection.drop();
 
             assertThat(item, is(equalTo(recovered)));
-
-            System.out.println("Success!");
-        }
-
-        Class<SimpleItem> klass = SimpleItem.class;
-        try {
-            klass.newInstance();
-            throw new IllegalStateException("This was supposes to fail... :(");
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            System.out.println("The constructor has private access it was supposed to ;)\n" + e.getMessage());
-        }
-
-        Constructor<SimpleItem> constructor = klass.getDeclaredConstructor();
-        constructor.setAccessible(true);
-        try {
-            constructor.newInstance();
-            throw new IllegalStateException("This was supposes to fail... :(");
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
-            if (e.getCause().getClass().equals(RuntimeException.class)) {
-                System.out.println("The constructor failed as it was supposed to ;)");
-            } else {
-                throw new RuntimeException(e);
-            }
         }
     }
 }

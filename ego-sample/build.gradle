@@ -1,0 +1,32 @@
+group 'com.github.albertosh'
+version '1.0-SNAPSHOT'
+
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "net.ltgt.gradle:gradle-apt-plugin:0.6"
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: "net.ltgt.apt"
+apply plugin: 'application'
+
+mainClassName = "com.github.albertosh.ego.sample.Main"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    apt project(':ego')
+    compile project(':ego')
+
+    compile 'junit:junit:4.12'
+    compile 'org.hamcrest:hamcrest-all:1.3'
+}

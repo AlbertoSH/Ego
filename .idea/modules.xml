@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ego/ego.iml" filepath="$PROJECT_DIR$/.idea/modules/ego/ego.iml" group="ego" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ego-project.iml" filepath="$PROJECT_DIR$/.idea/modules/ego-project.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ego-sample/ego-sample.iml" filepath="$PROJECT_DIR$/.idea/modules/ego-sample/ego-sample.iml" group="ego-sample" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ego-sample/ego-sample_main.iml" filepath="$PROJECT_DIR$/.idea/modules/ego-sample/ego-sample_main.iml" group="ego-sample" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ego-sample/ego-sample_test.iml" filepath="$PROJECT_DIR$/.idea/modules/ego-sample/ego-sample_test.iml" group="ego-sample" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ego/ego_main.iml" filepath="$PROJECT_DIR$/.idea/modules/ego/ego_main.iml" group="ego" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ego/ego_test.iml" filepath="$PROJECT_DIR$/.idea/modules/ego/ego_test.iml" group="ego" />
+    </modules>
+  </component>
+</project>

@@ -1,0 +1,3 @@
+rootProject.name = 'ego-project'
+include 'ego'
+include 'ego-sample'

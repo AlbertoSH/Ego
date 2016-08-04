@@ -9,6 +9,10 @@ public abstract class EgoObject {
         this.id = builder.getId();
     }
 
+    public EgoObject(String id) {
+        this.id = id;
+    }
+
     public final String getId() {
         return id;
     }

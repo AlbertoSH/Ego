@@ -6,13 +6,19 @@ import com.github.albertosh.ego.EgoObjectBuilder;
 public class SimpleItem extends EgoObject {
 
     private int someInt;
-
+    private long someLong;
+    private char someChar;
+    
     public int getSomeInt() {
         return someInt;
     }
 
-    public SimpleItem(EgoObjectBuilder builder) {
-        super(builder);
+    public long getSomeLong() {
+        return someLong;
+    }
+
+    public char getSomeChar() {
+        return someChar;
     }
 
     @Override
@@ -22,19 +28,26 @@ public class SimpleItem extends EgoObject {
 
         SimpleItem that = (SimpleItem) o;
 
-        return someInt == that.someInt;
+        if (someInt != that.someInt) return false;
+        if (someLong != that.someLong) return false;
+        return someChar == that.someChar;
 
     }
 
     @Override
     public int hashCode() {
-        return someInt;
+        int result = someInt;
+        result = 31 * result + (int) (someLong ^ (someLong >>> 32));
+        result = 31 * result + (int) someChar;
+        return result;
     }
 
     @Override
     public String toString() {
         return "SimpleItem{" +
                 "someInt=" + someInt +
+                ", someLong=" + someLong +
+                ", someChar=" + someChar +
                 ", " + super.toString() +
                 '}';
     }

@@ -35,6 +35,8 @@ public class Main {
 
             SimpleItem item = (SimpleItem) new SimpleItemBuilder()
                     .someInt(2)
+                    .someLong(40)
+                    .someChar('a')
                     .id(new ObjectId().toString())
                     .build();
 

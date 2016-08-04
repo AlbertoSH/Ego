@@ -12,6 +12,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import com.sun.source.tree.Tree;
+import com.sun.source.util.SimpleTreeVisitor;
 import com.sun.source.util.Trees;
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.tree.JCTree;
@@ -28,7 +29,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import javax.annotation.Generated;
 import javax.annotation.processing.Filer;
@@ -290,16 +290,16 @@ public class BuilderGenerator {
 
     private void injectConstructor(TypeElement currentClass, ClassName builderClass) {
         JCTree tree = (JCTree) trees.getTree(currentClass);
-        TreeTranslator visitor = new ConsturctorVisitor(currentClass, builderClass);
+        TreeTranslator visitor = new ConstructorVisitor(currentClass, builderClass);
         tree.accept(visitor);
     }
 
-    private class ConsturctorVisitor extends TreeTranslator {
+    private class ConstructorVisitor extends TreeTranslator {
 
         private final TypeElement currentClass;
         private final ClassName builderClass;
 
-        private ConsturctorVisitor(TypeElement currentClass, ClassName builderClass) {
+        private ConstructorVisitor(TypeElement currentClass, ClassName builderClass) {
             this.currentClass = currentClass;
             this.builderClass = builderClass;
         }
@@ -310,12 +310,55 @@ public class BuilderGenerator {
 
             Iterator<JCTree> iterator = classNode.getMembers().iterator();
             List<JCTree> members = new ArrayList<>();
-            iterator.forEachRemaining(members::add);
+            iterator.forEachRemaining((member) -> {
+                boolean addNode = true;
+                if (member instanceof JCTree.JCMethodDecl) {
+                    JCTree.JCMethodDecl method = (JCTree.JCMethodDecl) member;
+                    if (method.getName().equals(names.init)) {
+                        if (method.getParameters().length() == 0) {
+                            // Default constructor
+                            // Inject stuff so it compiles but becomes useless at runtime
+                            addNode = false;
+                            members.add(defaultConstructorFixedNode());
+                        }
+                    }
+                }
+                if (addNode)
+                    members.add(member);
+            });
             members.add(getConstructorNode(classNode));
             JCTree[] asArray = members.toArray(new JCTree[members.size()]);
             classNode.defs = com.sun.tools.javac.util.List.from(asArray);
             result = classNode;
         }
+
+        private JCTree defaultConstructorFixedNode() {
+            JCTree.JCModifiers modifiers = make.Modifiers(0); // Default visibility
+
+            ListBuffer<JCTree.JCStatement> nullChecks = new ListBuffer<JCTree.JCStatement>();
+            ListBuffer<JCTree.JCStatement> assigns = new ListBuffer<JCTree.JCStatement>();
+            ListBuffer<JCTree.JCVariableDecl> params = new ListBuffer<JCTree.JCVariableDecl>();
+
+            addDefaultSuperInvocation(assigns);
+            throwException(assigns);
+
+            return make.MethodDef(modifiers, names.init,
+                    null, com.sun.tools.javac.util.List.<JCTree.JCTypeParameter>nil(), params.toList(), com.sun.tools.javac.util.List.<JCTree.JCExpression>nil(),
+                    make.Block(0L, nullChecks.appendList(assigns).toList()), null);
+        }
+
+        private void addDefaultSuperInvocation(ListBuffer<JCTree.JCStatement> assigns) {
+            JCTree.JCExpression builderParam = make.Literal("");
+            JCTree.JCIdent sup = make.Ident(names._super);
+            JCTree.JCMethodInvocation invocation = make.Apply(com.sun.tools.javac.util.List.nil(), sup, com.sun.tools.javac.util.List.of(builderParam));
+            JCTree.JCExpressionStatement exec = make.Exec(invocation);
+            assigns.append(exec);
+        }
+
+        private void throwException(ListBuffer<JCTree.JCStatement> assigns) {
+            //TODO
+        }
+
 
         private JCTree getConstructorNode(JCTree.JCClassDecl classNode) {
             JCTree.JCModifiers modifiers = make.Modifiers(0); // Default visibility
@@ -382,4 +425,17 @@ public class BuilderGenerator {
             });
         }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
 }

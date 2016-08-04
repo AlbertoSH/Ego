@@ -15,6 +15,8 @@ import com.sun.source.tree.Tree;
 import com.sun.source.util.SimpleTreeVisitor;
 import com.sun.source.util.Trees;
 import com.sun.tools.javac.code.Flags;
+import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.tree.TreeTranslator;
@@ -320,6 +322,38 @@ public class BuilderGenerator {
                             // Inject stuff so it compiles but becomes useless at runtime
                             addNode = false;
                             members.add(defaultConstructorFixedNode());
+                        } else if (method.getParameters().length() == 3) {
+                            //System.out.println("CONSTRUCTOR INTERESANTE " + method);
+                            method.accept(new TreeTranslator() {
+                                @Override
+                                public void visitNewClass(JCTree.JCNewClass jcNewClass) {
+                                    System.out.println("NewClass " + jcNewClass);
+                                    System.out.println("encl " + jcNewClass.encl);
+                                    System.out.println("clazz " + jcNewClass.clazz);
+                                    System.out.println("def " + jcNewClass.def);
+                                    super.visitNewClass(jcNewClass);
+                                    jcNewClass.accept(new TreeTranslator() {
+
+                                        @Override
+                                        public void visitLiteral(JCTree.JCLiteral jcLiteral) {
+                                            System.out.println("Literal: " + jcLiteral);
+                                            super.visitLiteral(jcLiteral);
+                                        }
+
+                                        @Override
+                                        public void visitClassDef(JCTree.JCClassDecl jcClassDecl) {
+                                            System.out.println("jcClassDecl: " + jcClassDecl);
+                                            super.visitClassDef(jcClassDecl);
+                                        }
+                                    });
+                                }
+
+                                @Override
+                                public void visitThrow(JCTree.JCThrow jcThrow) {
+                                    System.out.println("Throw: " + jcThrow);
+                                    super.visitThrow(jcThrow);
+                                }
+                            });
                         }
                     }
                 }
@@ -333,7 +367,7 @@ public class BuilderGenerator {
         }
 
         private JCTree defaultConstructorFixedNode() {
-            JCTree.JCModifiers modifiers = make.Modifiers(0); // Default visibility
+            JCTree.JCModifiers modifiers = make.Modifiers(2); // Private visibility
 
             ListBuffer<JCTree.JCStatement> nullChecks = new ListBuffer<JCTree.JCStatement>();
             ListBuffer<JCTree.JCStatement> assigns = new ListBuffer<JCTree.JCStatement>();
@@ -356,7 +390,22 @@ public class BuilderGenerator {
         }
 
         private void throwException(ListBuffer<JCTree.JCStatement> assigns) {
-            //TODO
+            JCTree.JCExpression textArg = make.Literal("This constructor is just for the compiler not to complain.\n" +
+                    "It\'s not intended to be used!");
+
+            JCTree.JCExpression javaPackage = make.Ident(names.fromString("java"));
+            JCTree.JCExpression javaLangPackage = make.Select(javaPackage, names.fromString("lang"));
+
+            com.sun.tools.javac.util.List<JCTree.JCExpression> typeArgs =
+                    com.sun.tools.javac.util.List
+                            .of(make.Select(javaLangPackage, names.fromString("String")));
+
+            JCTree.JCExpression clazz = make.Select(javaLangPackage, names.fromString("RuntimeException"));
+            com.sun.tools.javac.util.List<JCTree.JCExpression> args =
+                    com.sun.tools.javac.util.List.of(textArg);
+            JCTree.JCNewClass newClass = make.NewClass(null, typeArgs, clazz, args, null);
+            JCTree.JCThrow throwNode = make.Throw(newClass);
+            assigns.add(throwNode);
         }
 
 

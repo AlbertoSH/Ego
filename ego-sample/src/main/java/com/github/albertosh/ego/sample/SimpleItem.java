@@ -8,7 +8,7 @@ public class SimpleItem extends EgoObject {
     private int someInt;
     private long someLong;
     private char someChar;
-    
+
     public int getSomeInt() {
         return someInt;
     }

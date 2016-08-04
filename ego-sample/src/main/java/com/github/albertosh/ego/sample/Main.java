@@ -3,6 +3,7 @@ package com.github.albertosh.ego.sample;
 import com.github.albertosh.ego.sample.codecs.SimpleItemEgoCodec;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
+import com.mongodb.client.MongoCollection;
 
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistries;
@@ -30,29 +31,31 @@ public class Main {
         MongoClientOptions options = MongoClientOptions.builder()
                 .codecRegistry(codecRegistry)
                 .build();
-        MongoClient client = new MongoClient("localhost:27017", options);
+        try (MongoClient client = new MongoClient("localhost:27017", options)) {
 
-        SimpleItem item = (SimpleItem) new SimpleItemBuilder()
-                .someInt(2)
-                .id(new ObjectId().toString())
-                .build();
+            SimpleItem item = (SimpleItem) new SimpleItemBuilder()
+                    .someInt(2)
+                    .id(new ObjectId().toString())
+                    .build();
 
-        client
-                .getDatabase("ego")
-                .getCollection("item")
-                .withDocumentClass(SimpleItem.class)
-                .insertOne(item);
+            MongoCollection<SimpleItem> collection = client
+                    .getDatabase("ego")
+                    .getCollection("item")
+                    .withDocumentClass(SimpleItem.class);
 
-        SimpleItem recovered = client
-                .getDatabase("ego")
-                .getCollection("item")
-                .withDocumentClass(SimpleItem.class)
-                .find()
-                .first();
+            collection
+                    .insertOne(item);
 
-        client.close();
+            SimpleItem recovered = collection
+                    .find()
+                    .first();
 
-        assertThat(item, is(equalTo(recovered)));
+            collection.drop();
+            
+            assertThat(item, is(equalTo(recovered)));
 
+            System.out.println("Success!");
+
+        }
     }
 }

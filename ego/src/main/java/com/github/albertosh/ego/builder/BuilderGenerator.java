@@ -326,8 +326,7 @@ public class BuilderGenerator {
 
             fillParams(params);
 
-            if (classDoesNotExtendEgoObject(currentClass))
-                addSuperInvocation(assigns);
+            addSuperInvocation(assigns);
 
             fillAssigns(classNode, assigns);
 

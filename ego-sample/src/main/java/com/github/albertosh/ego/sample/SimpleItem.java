@@ -11,6 +11,10 @@ public class SimpleItem extends EgoObject {
         return someInt;
     }
 
+    public SimpleItem(EgoObjectBuilder builder) {
+        super(builder);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

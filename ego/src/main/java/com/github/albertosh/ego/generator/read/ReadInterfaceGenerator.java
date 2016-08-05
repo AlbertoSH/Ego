@@ -15,9 +15,9 @@ import javax.annotation.processing.Messager;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
-class ReadInterfaceGenerator extends EgoInterfaceGenerator {
+import static com.github.albertosh.ego.generator.read.ReadGenerator.READ_SUFFIX;
 
-    public final static String READ_SUFFIX = "EgoRead";
+class ReadInterfaceGenerator extends EgoInterfaceGenerator {
 
     protected ReadInterfaceGenerator(Messager messager, Filer filer) {
         super(messager, filer);

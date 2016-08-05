@@ -69,11 +69,6 @@ public class CodecGenerator extends EgoClassGenerator {
     }
 
     @Override
-    protected String getPrefix() {
-        return "";
-    }
-
-    @Override
     protected String getSuffix() {
         return CODEC_SUFFIX;
     }

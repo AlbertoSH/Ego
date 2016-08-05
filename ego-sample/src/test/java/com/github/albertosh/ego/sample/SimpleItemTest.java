@@ -1,6 +1,9 @@
 package com.github.albertosh.ego.sample;
 
+import com.github.albertosh.ego.EgoObjectBuilder;
 import com.github.albertosh.ego.sample.codecs.SimpleItemEgoCodec;
+import com.github.albertosh.ego.sample.egocreate.ISimpleItemEgoCreate;
+import com.github.albertosh.ego.sample.egocreate.SimpleItemEgoCreate;
 import com.github.albertosh.ego.sample.egoread.ISimpleItemEgoRead;
 import com.github.albertosh.ego.sample.egoread.SimpleItemEgoRead;
 import com.mongodb.MongoClient;
@@ -23,6 +26,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.IsEqual.equalTo;
 
+@SuppressWarnings("unchecked")
 public class SimpleItemTest {
 
     @Test
@@ -66,32 +70,31 @@ public class SimpleItemTest {
                 .codecRegistry(codecRegistry)
                 .build();
         try (MongoClient client = new MongoClient("localhost:27017", options)) {
+            try {
+                ISimpleItemEgoCreate create = new SimpleItemEgoCreate(client, "ego");
+
+                SimpleItemEgoBuilder itemBuilder = (SimpleItemEgoBuilder) new SimpleItemEgoBuilder()
+                        .someInt(2)
+                        .someLong(40)
+                        .someChar('a')
+                        .id(new ObjectId().toString());
+                SimpleItem item = itemBuilder.build();
+
+                SimpleItem inserted = create.create(itemBuilder);
+
+                assertThat(inserted, is(equalTo(inserted)));
 
 
-            SimpleItem item = (SimpleItem) new SimpleItemBuilder()
-                    .someInt(2)
-                    .someLong(40)
-                    .someChar('a')
-                    .id(new ObjectId().toString())
-                    .build();
+                ISimpleItemEgoRead read = new SimpleItemEgoRead(client, "ego");
 
-            MongoCollection<SimpleItem> collection = client
-                    .getDatabase("ego")
-                    .getCollection("SimpleItem")
-                    .withDocumentClass(SimpleItem.class);
+                List<SimpleItem> recoveredList = read.read();
 
-            collection
-                    .insertOne(item);
-
-            ISimpleItemEgoRead read = new SimpleItemEgoRead(client, "ego");
-
-            List<SimpleItem> recoveredList = read.read();
-
-            client.dropDatabase("ego");
-
-            assertThat(recoveredList, hasSize(1));
-            SimpleItem recovered = recoveredList.get(0);
-            assertThat(item, is(equalTo(recovered)));
+                assertThat(recoveredList, hasSize(1));
+                SimpleItem recovered = recoveredList.get(0);
+                assertThat(item, is(equalTo(recovered)));
+            } finally {
+                client.dropDatabase("ego");
+            }
         }
     }
 }

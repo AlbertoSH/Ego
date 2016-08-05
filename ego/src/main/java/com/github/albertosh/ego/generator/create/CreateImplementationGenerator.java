@@ -1,35 +1,31 @@
-package com.github.albertosh.ego.generator.read;
+package com.github.albertosh.ego.generator.create;
 
 import com.github.albertosh.ego.generator.EgoClassGenerator;
-import com.github.albertosh.ego.generator.EgoInterfaceGenerator;
-import com.github.albertosh.ego.persistence.read.EgoRead;
-import com.github.albertosh.ego.persistence.read.IEgoRead;
+import com.github.albertosh.ego.generator.builder.BuilderGenerator;
+import com.github.albertosh.ego.persistence.create.EgoCreate;
+import com.github.albertosh.ego.persistence.create.IEgoCreate;
 import com.mongodb.MongoClient;
-import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 
-import org.bson.BsonWriter;
-
-import javax.annotation.Generated;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
-import static com.github.albertosh.ego.generator.read.ReadGenerator.READ_SUFFIX;
+import static com.github.albertosh.ego.generator.create.CreateGenerator.CREATE_SUFFIX;
 
-class ReadImplementationGenerator extends EgoClassGenerator {
+class CreateImplementationGenerator extends EgoClassGenerator {
 
-    protected ReadImplementationGenerator(Messager messager, Filer filer) {
+    protected CreateImplementationGenerator(Messager messager, Filer filer) {
         super(messager, filer);
     }
 
     @Override
     protected String getSuffix() {
-        return READ_SUFFIX;
+        return CREATE_SUFFIX;
     }
 
     @Override
@@ -50,8 +46,11 @@ class ReadImplementationGenerator extends EgoClassGenerator {
                 "I" + currentClassElement.getSimpleName().toString() + getSuffix()
         ));
 
-        ParameterizedTypeName superType = ParameterizedTypeName.get(ClassName.get(EgoRead.class), currentClassTypeName);
-        currentTypeSpec.superclass(superType);
+        ClassName currentBuilderTypeName = ClassName.get(currentPackage, currentClassElement.getSimpleName() + BuilderGenerator.BUILDER_CLASS_SUFIX);
+        ParameterizedTypeName currentBuilderParameterizedTypeName = ParameterizedTypeName.get(currentBuilderTypeName, currentClassTypeName);
+        ParameterizedTypeName interfaceType = ParameterizedTypeName.get(ClassName.get(EgoCreate.class), currentClassTypeName, currentBuilderParameterizedTypeName);
+
+        currentTypeSpec.superclass(interfaceType);
     }
 
     private void addConstructor() {

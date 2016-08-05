@@ -15,7 +15,6 @@ public abstract class EgoObjectBuilder<T extends EgoObject> implements Builder<T
         return this;
     }
 
-
     public EgoObjectBuilder<T> fromPrototype(EgoObject prototype) {
         this.id = prototype.getId();
         return this;

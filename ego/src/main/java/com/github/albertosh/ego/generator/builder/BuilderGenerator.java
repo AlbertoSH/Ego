@@ -44,7 +44,7 @@ import javax.lang.model.util.Types;
 
 public class BuilderGenerator extends EgoClassGenerator {
 
-    public final static String BUILDER_CLASS_SUFIX = "Builder";
+    public final static String BUILDER_CLASS_SUFIX = "EgoBuilder";
 
     private final static String BUILDER_PACKAGE_SUFIX = "";
     private final Trees trees;
@@ -150,8 +150,8 @@ public class BuilderGenerator extends EgoClassGenerator {
         builder.addTypeVariable(typeVariableName);
         TypeName currentBuilderType = ParameterizedTypeName.get(builderClass, typeVariableName);
 
-        //addSuperClass(builder, currentClass, typeVariableName);
-        addSuperClass(builder, currentClass, TypeName.get(currentClass.asType()));
+        addSuperClass(builder, currentClass, typeVariableName);
+        //addSuperClass(builder, currentClass, TypeName.get(currentClass.asType()));
 
         MethodSpec.Builder fromPrototypeBuilder = MethodSpec.methodBuilder("fromPrototype")
 //                .addAnnotation(OverridingMethodsMustInvokeSuper.class)

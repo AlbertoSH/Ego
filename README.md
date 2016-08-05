@@ -15,11 +15,11 @@ Compile time generated JavaORM for MongoDB — Edit
 
 - Builder generation (**Done**)
 - Codec generation (Half done, working on it...)
-- Writer class generation
-- Reader class generation (**Done**, very simple though)
-- Filters class generation
+- Create class generation (**Done**)
+- Read class generation (**Done**, very simple though, it will be improved with filter and sort operations)
+- Filter class generation
 - Delete class generation
-- Patchs class generation
+- Patch class generation
 - Update class generation
 
 

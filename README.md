@@ -5,6 +5,11 @@ Compile time generated JavaORM for MongoDB — Edit
 
 #### **Currently under development!!!**
 
+Operations supported:
+
+* Create
+* Read (quite simple, though)
+
 ## Overview
 
 **Ego** analyzes your models and generates classes for DB operations
@@ -13,14 +18,62 @@ Compile time generated JavaORM for MongoDB — Edit
 
 ## Roadmap
 
+###Must have:
+
 - Builder generation (**Done**)
 - Codec generation (Half done, working on it...)
 - Create class generation (**Done**)
 - Read class generation (**Done**, very simple though, it will be improved with filter and sort operations)
-- Filter class generation
 - Delete class generation
+- Filter class generation
 - Patch class generation
 - Update class generation
+
+###Nice to have:
+
+- Specify the collection name in the constructor
+
+
+> I'm open to suggestions so feel free to open an issue at https://github.com/AlbertoSH/Ego/issues
+
+---
+
+## How to start
+
+1. Clone this repo
+  * `git clone https://github.com/AlbertoSH/Ego.git`
+2. Make your objects extend `EgoObject`
+  * You have an example at `com.github.albertosh.ego.sample.SimpleItem`
+3. Compile sample (or your code) with Gradle
+  * `./gradlew ego-sample:compileJava`
+4. The code generated is in `./ego-sample/build/generated/source/apt`
+5. Create a `CodecRegistry` with all your codecs (**NOTE: This step will be done automatically in future versions**)
+   
+        List<Codec<?>> codecs = new ArrayList<>();
+        codecs.add(new SimpleItemEgoCodec());
+        ... // all your codecs
+        CodecRegistry codecRegistry = CodecRegistries.fromRegistries(
+                MongoClient.getDefaultCodecRegistry(),
+                CodecRegistries.fromCodecs(codecs));
+
+
+6. Instantiate a `MongoClient` including the `CodecRegistry`
+
+        MongoClientOptions options = MongoClientOptions.builder()
+                .codecRegistry(codecRegistry)
+                .build();
+        MongoClient client = new MongoClient("localhost:27017", options)
+
+7. You can now create your I*EgoCreate, I*EgoRead classes with that `MongoClient` and a database name:
+  * I recommend you to declare your variables as interfaces so you can change the implementation whenever you want 
+
+                ISimpleItemEgoCreate create = new SimpleItemEgoCreate(client, "ego");
+                ISimpleItemEgoRead read = new SimpleItemEgoRead(client, "ego");
+
+
+**You have a use example at `test` folder**
+
+
 
 
 ---

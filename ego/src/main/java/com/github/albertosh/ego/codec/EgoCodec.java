@@ -38,7 +38,8 @@ public abstract class EgoCodec<T extends EgoObject> implements Codec<T> {
     protected <B extends EgoObjectBuilder<T>> void decodeCurrentField(BsonReader reader,
                                                                       DecoderContext context,
                                                                       B builder,
-                                                                      String field){}
+                                                                      String field) {
+    }
 
 
     @Override
@@ -54,6 +55,7 @@ public abstract class EgoCodec<T extends EgoObject> implements Codec<T> {
     // To be overridden by child classes
     protected void encodeCurrentObject(BsonWriter writer,
                                        T value,
-                                       EncoderContext context) {}
+                                       EncoderContext context) {
+    }
 
 }

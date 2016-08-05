@@ -46,13 +46,12 @@ public class CodecGenerator {
     private final Filer filer;
     private final Messager messager;
     private final Types types;
-
+    private final Map<String, ClassName> superClassCodecMap;
     private TypeSpec.Builder currentTypeSpec;
     private TypeElement currentClassElement;
     private TypeName currentClassTypeName;
     private TypeName currentBuilderTypeName;
     private String currentPackage;
-    private final Map<String, ClassName> superClassCodecMap;
 
     public CodecGenerator(Filer filer, Messager messager, Types typeUtils) {
         this.filer = filer;
@@ -81,7 +80,7 @@ public class CodecGenerator {
         currentClassElement = classElement;
         currentTypeSpec = TypeSpec.classBuilder(classElement.getSimpleName() + CODEC_SUFFIX);
         currentClassTypeName = TypeName.get(currentClassElement.asType());
-        currentPackage = ((PackageElement)currentClassElement.getEnclosingElement()).getQualifiedName().toString();
+        currentPackage = ((PackageElement) currentClassElement.getEnclosingElement()).getQualifiedName().toString();
         currentBuilderTypeName = ClassName.get(currentPackage, currentClassElement.getSimpleName() + BuilderGenerator.BUILDER_CLASS_SUFIX);
 
         setClassHeader();
@@ -296,7 +295,7 @@ public class CodecGenerator {
             PrimitiveType primitiveType = (PrimitiveType) field.asType();
             String readerMethod = getReaderMethodForType(primitiveType.toString());
             decodeMethod
-                    .addStatement("case $S:",field.getSimpleName())
+                    .addStatement("case $S:", field.getSimpleName())
                     .addStatement("currentBuilder.$L("
                             + addModifiersForDecode(primitiveType.toString(), readerMethod)
                             + ")", field.getSimpleName())

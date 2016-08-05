@@ -12,11 +12,8 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import com.sun.source.tree.Tree;
-import com.sun.source.util.SimpleTreeVisitor;
 import com.sun.source.util.Trees;
 import com.sun.tools.javac.code.Flags;
-import com.sun.tools.javac.code.Symbol;
-import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.tree.TreeTranslator;
@@ -110,7 +107,7 @@ public class BuilderGenerator {
 
     private boolean classExtendsEgoObject(TypeElement currentClass) {
         TypeMirror superClass = currentClass.getSuperclass();
-        return superClass.toString().equals(EgoObject.class.toString().replaceAll("class ",""));
+        return superClass.toString().equals(EgoObject.class.toString().replaceAll("class ", ""));
     }
 
     private boolean superBuilderHasBeenAlreadyGenerated(TypeElement currentClass) {
@@ -136,7 +133,7 @@ public class BuilderGenerator {
                 .addModifiers(Modifier.PUBLIC)
                 .addAnnotation(
                         AnnotationSpec.builder(Generated.class)
-                                .addMember("value", "\"MagicBuilder\"")
+                                .addMember("value", "\"Ego\"")
                                 .build())
                 .addMethod(MethodSpec.constructorBuilder().addModifiers(Modifier.PUBLIC).build());
 
@@ -322,38 +319,6 @@ public class BuilderGenerator {
                             // Inject stuff so it compiles but becomes useless at runtime
                             addNode = false;
                             members.add(defaultConstructorFixedNode());
-                        } else if (method.getParameters().length() == 3) {
-                            //System.out.println("CONSTRUCTOR INTERESANTE " + method);
-                            method.accept(new TreeTranslator() {
-                                @Override
-                                public void visitNewClass(JCTree.JCNewClass jcNewClass) {
-                                    System.out.println("NewClass " + jcNewClass);
-                                    System.out.println("encl " + jcNewClass.encl);
-                                    System.out.println("clazz " + jcNewClass.clazz);
-                                    System.out.println("def " + jcNewClass.def);
-                                    super.visitNewClass(jcNewClass);
-                                    jcNewClass.accept(new TreeTranslator() {
-
-                                        @Override
-                                        public void visitLiteral(JCTree.JCLiteral jcLiteral) {
-                                            System.out.println("Literal: " + jcLiteral);
-                                            super.visitLiteral(jcLiteral);
-                                        }
-
-                                        @Override
-                                        public void visitClassDef(JCTree.JCClassDecl jcClassDecl) {
-                                            System.out.println("jcClassDecl: " + jcClassDecl);
-                                            super.visitClassDef(jcClassDecl);
-                                        }
-                                    });
-                                }
-
-                                @Override
-                                public void visitThrow(JCTree.JCThrow jcThrow) {
-                                    System.out.println("Throw: " + jcThrow);
-                                    super.visitThrow(jcThrow);
-                                }
-                            });
                         }
                     }
                 }
@@ -474,17 +439,6 @@ public class BuilderGenerator {
             });
         }
     }
-
-
-
-
-
-
-
-
-
-
-
 
 
 }

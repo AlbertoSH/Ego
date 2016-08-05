@@ -16,7 +16,7 @@ Compile time generated JavaORM for MongoDB — Edit
 - Builder generation (**Done**)
 - Codec generation (Half done, working on it...)
 - Writer class generation
-- Reader class generation
+- Reader class generation (**Done**, very simple though)
 - Filters class generation
 - Delete class generation
 - Patchs class generation

@@ -1,7 +1,10 @@
-package com.github.albertosh.ego.builder;
+package com.github.albertosh.ego.generator.builder;
 
+import com.github.albertosh.ego.generator.EgoClassGenerator;
+import com.github.albertosh.ego.generator.EgoGenerator;
 import com.github.albertosh.ego.EgoObject;
 import com.github.albertosh.ego.EgoObjectBuilder;
+import com.github.albertosh.ego.persistence.builder.Builder;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
@@ -38,11 +41,11 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
-import javax.tools.Diagnostic;
 
-public class BuilderGenerator {
+public class BuilderGenerator extends EgoClassGenerator {
 
     public final static String BUILDER_CLASS_SUFIX = "Builder";
+
     private final static String BUILDER_PACKAGE_SUFIX = "";
     private final Trees trees;
     private final TreeMaker make;
@@ -54,6 +57,7 @@ public class BuilderGenerator {
     private final Map<TypeName, ClassName> alreadyGeneratedClasses2Builder;
 
     public BuilderGenerator(Names names, TreeMaker make, Trees trees, Messager messager, Types types, Filer filer) {
+        super(messager, filer);
         this.names = names;
         this.make = make;
         this.trees = trees;
@@ -64,18 +68,20 @@ public class BuilderGenerator {
         this.alreadyGeneratedClasses2Builder = new HashMap<TypeName, ClassName>();
     }
 
-
-    private void warning(String message, Element e) {
-        messager.printMessage(
-                Diagnostic.Kind.WARNING,
-                message,
-                e);
-    }
-
-
-    public void generateBuilder(TypeElement classElement) {
+    @Override
+    protected void doGenerate(TypeElement classElement) {
         pendingClasses.add(classElement);
         generateBuilders();
+    }
+
+    @Override
+    protected String getPrefix() {
+        return "";
+    }
+
+    @Override
+    protected String getSuffix() {
+        return BUILDER_CLASS_SUFIX;
     }
 
     private void generateBuilders() {

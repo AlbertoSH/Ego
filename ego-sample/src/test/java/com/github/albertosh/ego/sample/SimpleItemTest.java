@@ -1,6 +1,8 @@
 package com.github.albertosh.ego.sample;
 
 import com.github.albertosh.ego.sample.codecs.SimpleItemEgoCodec;
+import com.github.albertosh.ego.sample.egoread.ISimpleItemEgoRead;
+import com.github.albertosh.ego.sample.egoread.SimpleItemEgoRead;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.client.MongoCollection;
@@ -18,6 +20,7 @@ import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.IsEqual.equalTo;
 
 public class SimpleItemTest {
@@ -64,6 +67,7 @@ public class SimpleItemTest {
                 .build();
         try (MongoClient client = new MongoClient("localhost:27017", options)) {
 
+
             SimpleItem item = (SimpleItem) new SimpleItemBuilder()
                     .someInt(2)
                     .someLong(40)
@@ -73,18 +77,20 @@ public class SimpleItemTest {
 
             MongoCollection<SimpleItem> collection = client
                     .getDatabase("ego")
-                    .getCollection("item")
+                    .getCollection("SimpleItem")
                     .withDocumentClass(SimpleItem.class);
 
             collection
                     .insertOne(item);
 
-            SimpleItem recovered = collection
-                    .find()
-                    .first();
+            ISimpleItemEgoRead read = new SimpleItemEgoRead(client, "ego");
 
-            collection.drop();
+            List<SimpleItem> recoveredList = read.read();
 
+            client.dropDatabase("ego");
+
+            assertThat(recoveredList, hasSize(1));
+            SimpleItem recovered = recoveredList.get(0);
             assertThat(item, is(equalTo(recovered)));
         }
     }

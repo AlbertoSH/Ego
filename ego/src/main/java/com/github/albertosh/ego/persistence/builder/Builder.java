@@ -1,4 +1,4 @@
-package com.github.albertosh.ego.builder;
+package com.github.albertosh.ego.persistence.builder;
 
 public interface Builder<T> {
 

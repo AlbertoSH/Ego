@@ -1,7 +1,6 @@
 package com.github.albertosh.ego;
 
-import com.github.albertosh.ego.builder.Builder;
-
+import com.github.albertosh.ego.persistence.builder.Builder;
 
 public abstract class EgoObjectBuilder<T extends EgoObject> implements Builder<T> {
 

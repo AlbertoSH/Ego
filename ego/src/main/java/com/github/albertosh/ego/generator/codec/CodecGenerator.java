@@ -1,17 +1,18 @@
-package com.github.albertosh.ego.codec;
+package com.github.albertosh.ego.generator.codec;
 
 
+import com.github.albertosh.ego.generator.EgoClassGenerator;
+import com.github.albertosh.ego.generator.EgoGenerator;
 import com.github.albertosh.ego.EgoIgnore;
 import com.github.albertosh.ego.EgoObject;
 import com.github.albertosh.ego.EgoObjectBuilder;
-import com.github.albertosh.ego.builder.BuilderGenerator;
+import com.github.albertosh.ego.generator.builder.BuilderGenerator;
+import com.github.albertosh.ego.persistence.codec.EgoCodec;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
-import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 
 import org.bson.BsonReader;
@@ -20,7 +21,6 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -31,60 +31,33 @@ import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.util.Types;
-import javax.tools.Diagnostic;
 
-public class CodecGenerator {
+public class CodecGenerator extends EgoClassGenerator {
 
     private final String CODEC_SUFFIX = "EgoCodec";
     private final String CODEC_PACKAGE_SUFFIX = ".codecs";
 
-    private final Filer filer;
-    private final Messager messager;
     private final Types types;
     private final Map<String, ClassName> superClassCodecMap;
-    private TypeSpec.Builder currentTypeSpec;
-    private TypeElement currentClassElement;
-    private TypeName currentClassTypeName;
-    private TypeName currentBuilderTypeName;
-    private String currentPackage;
+    protected TypeName currentBuilderTypeName;
 
     public CodecGenerator(Filer filer, Messager messager, Types typeUtils) {
-        this.filer = filer;
-        this.messager = messager;
+        super(messager, filer);
         this.types = typeUtils;
         this.superClassCodecMap = new HashMap<>();
         ClassName egoClass = ClassName.get(EgoObject.class);
         superClassCodecMap.put(egoClass.packageName() + "." + egoClass.simpleName(), ClassName.get(EgoCodec.class));
     }
 
-    private void warning(String message, Element e) {
-        messager.printMessage(
-                Diagnostic.Kind.WARNING,
-                message,
-                e);
-    }
-
-    private void error(String message, Element e) {
-        messager.printMessage(
-                Diagnostic.Kind.ERROR,
-                message,
-                e);
-    }
-
-    public void generateCodec(TypeElement classElement) {
-        currentClassElement = classElement;
-        currentTypeSpec = TypeSpec.classBuilder(classElement.getSimpleName() + CODEC_SUFFIX);
-        currentClassTypeName = TypeName.get(currentClassElement.asType());
-        currentPackage = ((PackageElement) currentClassElement.getEnclosingElement()).getQualifiedName().toString();
+    @Override
+    protected void doGenerate(TypeElement classElement) {
         currentBuilderTypeName = ClassName.get(currentPackage, currentClassElement.getSimpleName() + BuilderGenerator.BUILDER_CLASS_SUFIX);
 
         setClassHeader();
-        addSuperClass();
         addGetEncoderClassMethod();
         addGetNewBuilder();
         addEncodeCurrentObject();
@@ -92,26 +65,28 @@ public class CodecGenerator {
 
         writeToFile();
 
-        currentPackage = null;
         currentBuilderTypeName = null;
-        currentClassTypeName = null;
-        currentTypeSpec = null;
-        currentClassElement = null;
+    }
+
+    @Override
+    protected String getPrefix() {
+        return "";
+    }
+
+    @Override
+    protected String getSuffix() {
+        return CODEC_SUFFIX;
+    }
+
+    @Override
+    protected String getPackageSuffix() {
+        return CODEC_PACKAGE_SUFFIX;
     }
 
     private void setClassHeader() {
-        currentTypeSpec.addModifiers(Modifier.PUBLIC)
-                .addAnnotation(
-                        AnnotationSpec.builder(Generated.class)
-                                .addMember("value", "\"Ego\"")
-                                .build());
-
         ParameterizedTypeName interfaceType = ParameterizedTypeName.get(ClassName.get(Codec.class), currentClassTypeName);
-
         currentTypeSpec.addSuperinterface(interfaceType);
-    }
 
-    private void addSuperClass() {
         String superClassQuialifiedName = currentClassElement.getSuperclass().toString();
         ClassName codecSuperClass = getCodecClassForClass(superClassQuialifiedName);
         ParameterizedTypeName superType = ParameterizedTypeName.get(codecSuperClass, currentClassTypeName);
@@ -360,13 +335,4 @@ public class CodecGenerator {
         }
     }
 
-    private void writeToFile() {
-        JavaFile javaFile = JavaFile.builder(currentPackage + CODEC_PACKAGE_SUFFIX, currentTypeSpec.build()).build();
-
-        try {
-            javaFile.writeTo(filer);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 }

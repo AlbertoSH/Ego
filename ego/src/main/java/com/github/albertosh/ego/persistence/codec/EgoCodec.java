@@ -1,4 +1,4 @@
-package com.github.albertosh.ego.codec;
+package com.github.albertosh.ego.persistence.codec;
 
 import com.github.albertosh.ego.EgoObject;
 import com.github.albertosh.ego.EgoObjectBuilder;

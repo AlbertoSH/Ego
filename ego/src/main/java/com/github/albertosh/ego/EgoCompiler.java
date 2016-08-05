@@ -1,7 +1,8 @@
 package com.github.albertosh.ego;
 
-import com.github.albertosh.ego.builder.BuilderGenerator;
-import com.github.albertosh.ego.codec.CodecGenerator;
+import com.github.albertosh.ego.generator.builder.BuilderGenerator;
+import com.github.albertosh.ego.generator.codec.CodecGenerator;
+import com.github.albertosh.ego.generator.read.ReadGenerator;
 import com.sun.source.util.Trees;
 import com.sun.tools.javac.processing.JavacProcessingEnvironment;
 import com.sun.tools.javac.tree.TreeMaker;
@@ -11,6 +12,8 @@ import com.sun.tools.javac.util.Names;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Filer;
+import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
@@ -25,23 +28,27 @@ public class EgoCompiler extends AbstractProcessor {
 
     private CodecGenerator codecGenerator;
     private BuilderGenerator builderGenerator;
+    private ReadGenerator readGenerator;
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
+        Messager messager = processingEnv.getMessager();
+        Filer filer = processingEnv.getFiler();
         codecGenerator = new CodecGenerator(
-                processingEnv.getFiler(),
-                processingEnv.getMessager(),
+                filer,
+                messager,
                 processingEnv.getTypeUtils());
         Context context = ((JavacProcessingEnvironment) processingEnv).getContext();
         builderGenerator = new BuilderGenerator(
                 Names.instance(context),
                 TreeMaker.instance(context),
                 Trees.instance(processingEnv),
-                processingEnv.getMessager(),
+                messager,
                 processingEnv.getTypeUtils(),
-                processingEnv.getFiler()
+                filer
         );
+        readGenerator = new ReadGenerator(messager, filer);
     }
 
     @Override
@@ -53,8 +60,9 @@ public class EgoCompiler extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         for (Element elem : roundEnv.getElementsAnnotatedWith(Ego.class)) {
             TypeElement classElement = (TypeElement) elem;
-            codecGenerator.generateCodec(classElement);
-            builderGenerator.generateBuilder(classElement);
+            codecGenerator.generate(classElement);
+            builderGenerator.generate(classElement);
+            readGenerator.generate(classElement);
         }
 
         return true;

@@ -21,6 +21,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static jdk.nashorn.internal.runtime.Debug.id;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -74,9 +75,10 @@ public class SimpleItemTest {
                 ISimpleItemEgoCreate create = new SimpleItemEgoCreate(client, "ego");
 
                 SimpleItemEgoBuilder itemBuilder = (SimpleItemEgoBuilder) new SimpleItemEgoBuilder()
-                        .someInt(2)
-                        .someLong(40)
-                        .someChar('a')
+                        .someString("foo")
+                        .someInteger(2)
+                        .someFloat(4.3f)
+                        .someCharacter('p')
                         .id(new ObjectId().toString());
                 SimpleItem item = itemBuilder.build();
 

@@ -68,6 +68,12 @@ public abstract class EgoGenerator {
         return "." + getSuffix().toLowerCase();
     };
 
+    protected void warning(String message) {
+        messager.printMessage(
+                Diagnostic.Kind.WARNING,
+                message);
+    }
+
     protected void warning(String message, Element e) {
         messager.printMessage(
                 Diagnostic.Kind.WARNING,

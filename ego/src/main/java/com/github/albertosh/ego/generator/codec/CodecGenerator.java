@@ -2,18 +2,17 @@ package com.github.albertosh.ego.generator.codec;
 
 
 import com.github.albertosh.ego.generator.EgoClassGenerator;
-import com.github.albertosh.ego.generator.EgoGenerator;
 import com.github.albertosh.ego.EgoIgnore;
 import com.github.albertosh.ego.EgoObject;
 import com.github.albertosh.ego.EgoObjectBuilder;
 import com.github.albertosh.ego.generator.builder.BuilderGenerator;
 import com.github.albertosh.ego.persistence.codec.EgoCodec;
-import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
+import com.sun.tools.javac.code.Type.ClassType;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
@@ -25,7 +24,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.annotation.Generated;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
@@ -34,6 +32,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.PrimitiveType;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 
 public class CodecGenerator extends EgoClassGenerator {
@@ -142,14 +141,12 @@ public class CodecGenerator extends EgoClassGenerator {
     private void encodeField(MethodSpec.Builder encodeMethod, VariableElement field) {
         Optional<String> method = methodThatReturnsValue(field);
         if (method.isPresent()) {
-            try {
-                PrimitiveType primitiveType = (PrimitiveType) field.asType();
-
+            if (field.asType() instanceof PrimitiveType) {
                 encodeMethod
                         .addStatement("writer.writeName($S)", field.getSimpleName());
                 writeField(encodeMethod, field, method.get());
 
-            } catch (ClassCastException e) {
+            } else {
                 encodeMethod
                         .beginControlFlow("if (value.$L != null)", method.get())
                         .addStatement("writer.writeName($S)", field.getSimpleName());
@@ -161,20 +158,32 @@ public class CodecGenerator extends EgoClassGenerator {
     }
 
     private void writeField(MethodSpec.Builder encodeMethod, VariableElement field, String getMethod) {
-        try {
-            PrimitiveType primitiveType = (PrimitiveType) field.asType();
-            String writerMethod = getWriterMethodForType(primitiveType.toString());
-            encodeMethod.addStatement("writer." + writerMethod + "("
-                    + addModifiersForEncode(primitiveType.toString())
-                    + ")", getMethod);
-        } catch (ClassCastException | IllegalArgumentException e) {
-            error(e.getMessage(), field);
-        }
+        if (field.asType() instanceof PrimitiveType)
+            writePrimitiveField(encodeMethod, field, getMethod);
+        else
+            writeClassField(encodeMethod, field, getMethod);
+    }
+
+    private void writePrimitiveField(MethodSpec.Builder encodeMethod, VariableElement field, String getMethod) {
+        PrimitiveType primitiveType = (PrimitiveType) field.asType();
+        String writerMethod = getWriterMethodForType(primitiveType.toString());
+        encodeMethod.addStatement("writer." + writerMethod + "("
+                + addModifiersForEncode(primitiveType.toString())
+                + ")", getMethod);
+    }
+
+    private void writeClassField(MethodSpec.Builder encodeMethod, VariableElement field, String getMethod) {
+        ClassType classType = (ClassType) field.asType();
+        String writerMethod = getWriterMethodForType(classType.toString());
+        encodeMethod.addStatement("writer." + writerMethod + "("
+                + addModifiersForEncode(classType.toString())
+                + ")", getMethod);
     }
 
     private String addModifiersForEncode(String type) {
         switch (type) {
             case "char":
+            case "java.lang.Character":
                 return "String.valueOf(value.$L)";
             default:
                 return "value.$L";
@@ -184,43 +193,33 @@ public class CodecGenerator extends EgoClassGenerator {
     private String getWriterMethodForType(String type) throws IllegalArgumentException {
         switch (type) {
             case "byte":
+            case "java.lang.Byte":
             case "int":
+            case "java.lang.Integer":
             case "short":
+            case "java.lang.Short":
                 return "writeInt32";
             case "long":
+            case "java.lang.Long":
                 return "writeInt64";
             case "boolean":
+            case "java.lang.Boolean":
                 return "writeBoolean";
             case "char":
+            case "java.lang.Character":
+            case "java.lang.String":
                 return "writeString";
             case "double":
+            case "java.lang.Double":
             case "float":
+            case "java.lang.Float":
                 return "writeDouble";
             default:
                 throw new IllegalArgumentException("Unkown type: " + type);
         }
     }
 
-    private Optional<String> methodThatReturnsValue(VariableElement field) {
-        if (field.getModifiers().contains(Modifier.PUBLIC)) {
-            return Optional.of(field.getSimpleName().toString());
-        } else {
-            StringBuilder transformedName = new StringBuilder(field.getSimpleName().toString());
-            char firstChar = transformedName.charAt(0);
-            firstChar = (char) (firstChar - 'a' + 'A');
-            transformedName.setCharAt(0, firstChar);
-            Element enclosingClass = field.getEnclosingElement();
-            for (Element method : enclosingClass.getEnclosedElements()) {
-                if (method.getKind().equals(ElementKind.METHOD)) {
-                    String methodName = method.getSimpleName().toString();
-                    if (methodName.equals("is" + transformedName) || methodName.equals("get" + transformedName))
-                        return Optional.of(methodName + "()");
-                }
-            }
-            warning("Couldn't find a way to get " + field.getSimpleName().toString() + "!\nThis can be easily fixed with a get method.", field);
-            return Optional.empty();
-        }
-    }
+
 
     private void addDecodeCurrentField() {
         ParameterizedTypeName egoBuilderParameterized = ParameterizedTypeName.get(ClassName.get(EgoObjectBuilder.class), currentClassTypeName);
@@ -261,21 +260,18 @@ public class CodecGenerator extends EgoClassGenerator {
     }
 
     private void decodeField(MethodSpec.Builder decodeMethod, VariableElement field) {
-        try {
-            PrimitiveType primitiveType = (PrimitiveType) field.asType();
-            String readerMethod = getReaderMethodForType(primitiveType.toString());
-            decodeMethod
-                    .addStatement("case $S:", field.getSimpleName())
-                    .addStatement("currentBuilder.$L("
-                            + addModifiersForDecode(primitiveType.toString(), readerMethod)
-                            + ")", field.getSimpleName())
-                    .addStatement("break");
+        TypeMirror type = field.asType();
+        String readerMethod = getReaderMethodForType(type.toString());
+        decodeMethod
+                .addStatement("case $S:", field.getSimpleName())
+                .addStatement("currentBuilder.$L("
+                        + addModifiersForDecode(type.toString(), readerMethod)
+                        + ")", field.getSimpleName())
+                .addStatement("break");
+    }
 
-        } catch (ClassCastException | IllegalArgumentException e) {
-            error(e.getMessage(), field);
-        }
-        // TODO
         /*
+                // TODO
         Optional<String> method = methodThatReturnsValue(field);
         if (method.isPresent()) {
             try {
@@ -295,22 +291,32 @@ public class CodecGenerator extends EgoClassGenerator {
             }
         }
         */
-    }
+
+
 
     private String getReaderMethodForType(String type) throws IllegalArgumentException {
         switch (type) {
             case "byte":
+            case "java.lang.Byte":
             case "int":
+            case "java.lang.Integer":
             case "short":
+            case "java.lang.Short":
                 return "readInt32";
             case "long":
+            case "java.lang.Long":
                 return "readInt64";
             case "boolean":
+            case "java.lang.Boolean":
                 return "readBoolean";
             case "char":
+            case "java.lang.Character":
+            case "java.lang.String":
                 return "readString";
             case "double":
+            case "java.lang.Double":
             case "float":
+            case "java.lang.Float":
                 return "readDouble";
             default:
                 throw new IllegalArgumentException("Unkown type: " + type);
@@ -320,11 +326,17 @@ public class CodecGenerator extends EgoClassGenerator {
     private String addModifiersForDecode(String type, String readerMethod) {
         switch (type) {
             case "char":
+            case "java.lang.Character":
                 return "reader." + readerMethod + "().charAt(0)";
             case "byte":
             case "float":
             case "short":
+            case "java.lang.Short":
                 return "(" + type + ") reader." + readerMethod + "()";
+            case "java.lang.Float":
+                return "((float) reader." + readerMethod + "())";
+            case "java.lang.Byte":
+                return "((Integer) reader." + readerMethod + "()).byteValue()";
             default:
                 return "reader." + readerMethod + "()";
         }

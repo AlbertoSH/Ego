@@ -4,20 +4,40 @@ import com.github.albertosh.ego.EgoObject;
 
 public class SimpleItem extends EgoObject {
 
-    private int someInt;
-    private long someLong;
-    private char someChar;
+    private String someString;
+    private Integer someInteger;
+    private Long someLong;
+    private Character someCharacter;
+    private Byte someByte;
+    private Double someDouble;
+    private Float someFloat;
 
-    public int getSomeInt() {
-        return someInt;
+    public String getSomeString() {
+        return someString;
     }
 
-    public long getSomeLong() {
+    public Integer getSomeInteger() {
+        return someInteger;
+    }
+
+    public Long getSomeLong() {
         return someLong;
     }
 
-    public char getSomeChar() {
-        return someChar;
+    public Character getSomeCharacter() {
+        return someCharacter;
+    }
+
+    public Byte getSomeByte() {
+        return someByte;
+    }
+
+    public Double getSomeDouble() {
+        return someDouble;
+    }
+
+    public Float getSomeFloat() {
+        return someFloat;
     }
 
     @Override
@@ -27,27 +47,31 @@ public class SimpleItem extends EgoObject {
 
         SimpleItem that = (SimpleItem) o;
 
-        if (someInt != that.someInt) return false;
-        if (someLong != that.someLong) return false;
-        return someChar == that.someChar;
+        if (someString != null ? !someString.equals(that.someString) : that.someString != null)
+            return false;
+        if (someInteger != null ? !someInteger.equals(that.someInteger) : that.someInteger != null)
+            return false;
+        if (someLong != null ? !someLong.equals(that.someLong) : that.someLong != null)
+            return false;
+        if (someCharacter != null ? !someCharacter.equals(that.someCharacter) : that.someCharacter != null)
+            return false;
+        if (someByte != null ? !someByte.equals(that.someByte) : that.someByte != null)
+            return false;
+        if (someDouble != null ? !someDouble.equals(that.someDouble) : that.someDouble != null)
+            return false;
+        return someFloat != null ? someFloat.equals(that.someFloat) : that.someFloat == null;
 
     }
 
     @Override
     public int hashCode() {
-        int result = someInt;
-        result = 31 * result + (int) (someLong ^ (someLong >>> 32));
-        result = 31 * result + (int) someChar;
+        int result = someString != null ? someString.hashCode() : 0;
+        result = 31 * result + (someInteger != null ? someInteger.hashCode() : 0);
+        result = 31 * result + (someLong != null ? someLong.hashCode() : 0);
+        result = 31 * result + (someCharacter != null ? someCharacter.hashCode() : 0);
+        result = 31 * result + (someByte != null ? someByte.hashCode() : 0);
+        result = 31 * result + (someDouble != null ? someDouble.hashCode() : 0);
+        result = 31 * result + (someFloat != null ? someFloat.hashCode() : 0);
         return result;
-    }
-
-    @Override
-    public String toString() {
-        return "SimpleItem{" +
-                "someInt=" + someInt +
-                ", someLong=" + someLong +
-                ", someChar=" + someChar +
-                ", " + super.toString() +
-                '}';
     }
 }

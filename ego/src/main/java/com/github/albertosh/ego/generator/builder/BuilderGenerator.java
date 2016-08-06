@@ -39,6 +39,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 
@@ -222,12 +223,12 @@ public class BuilderGenerator extends EgoClassGenerator {
         List<? extends Element> enclosed = currentClass.getEnclosedElements();
         for (Element field : enclosed) {
             if (field.getKind().isField()) {
-                writeSingleAttributeSet(field, builder, fromPrototypeBuilder, currentBuilderType);
+                writeSingleAttributeSet((VariableElement) field, builder, fromPrototypeBuilder, currentBuilderType);
             }
         }
     }
 
-    private void writeSingleAttributeSet(Element field, TypeSpec.Builder builder, MethodSpec.Builder fromPrototypeBuilder, TypeName currentBuilderType) {
+    private void writeSingleAttributeSet(VariableElement field, TypeSpec.Builder builder, MethodSpec.Builder fromPrototypeBuilder, TypeName currentBuilderType) {
         String name = field.getSimpleName().toString();
         TypeName type = TypeName.get(field.asType());
         builder.addField(FieldSpec.builder(
@@ -255,28 +256,6 @@ public class BuilderGenerator extends EgoClassGenerator {
         if (method.isPresent())
             fromPrototypeBuilder.addStatement("this.$L = prototype.$L", name, method.get());
     }
-
-    protected Optional<String> methodThatReturnsValue(Element field) {
-        if (field.getModifiers().contains(Modifier.PUBLIC)) {
-            return Optional.of(field.getSimpleName().toString());
-        } else {
-            StringBuilder transformedName = new StringBuilder(field.getSimpleName().toString());
-            char firstChar = transformedName.charAt(0);
-            firstChar = (char) (firstChar - 'a' + 'A');
-            transformedName.setCharAt(0, firstChar);
-            Element enclosingClass = field.getEnclosingElement();
-            for (Element method : enclosingClass.getEnclosedElements()) {
-                if (method.getKind().equals(ElementKind.METHOD)) {
-                    String methodName = method.getSimpleName().toString();
-                    if (methodName.equals("is" + transformedName) || methodName.equals("get" + transformedName))
-                        return Optional.of(methodName + "()");
-                }
-            }
-            warning("Couldn't find a way to get " + field.getSimpleName().toString() + "!\nThis can be easily fixed with a get method.\nBe careful when you use fromPrototype method", field);
-            return Optional.empty();
-        }
-    }
-
 
     private void addBuildMethod(Element currentClass, TypeSpec.Builder builder, TypeVariableName returningType) {
         TypeName elemType = TypeName.get(currentClass.asType());

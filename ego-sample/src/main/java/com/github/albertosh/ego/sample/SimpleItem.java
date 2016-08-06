@@ -74,4 +74,17 @@ public class SimpleItem extends EgoObject {
         result = 31 * result + (someFloat != null ? someFloat.hashCode() : 0);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "SimpleItem{" +
+                "someString='" + someString + '\'' +
+                ", someInteger=" + someInteger +
+                ", someLong=" + someLong +
+                ", someCharacter=" + someCharacter +
+                ", someByte=" + someByte +
+                ", someDouble=" + someDouble +
+                ", someFloat=" + someFloat +
+                '}';
+    }
 }

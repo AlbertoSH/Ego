@@ -64,12 +64,18 @@ Operations supported:
                 .build();
         MongoClient client = new MongoClient("localhost:27017", options)
 
-7. You can now create your I*EgoCreate, I*EgoRead classes with that `MongoClient` and a database name:
-  * I recommend you to declare your variables as interfaces so you can change the implementation whenever you want 
+7. You can now create your I\*EgoCreate, I\*EgoRead classes with that `MongoClient` and a database name: 
 
-                ISimpleItemEgoCreate create = new SimpleItemEgoCreate(client, "ego");
-                ISimpleItemEgoRead read = new SimpleItemEgoRead(client, "ego");
+        ISimpleItemEgoCreate create = new SimpleItemEgoCreate(client, "ego");
+        ISimpleItemEgoRead read = new SimpleItemEgoRead(client, "ego");
 
+8. Dont't forget to close the connection!!!
+
+        MongoClient client = ...
+        // Use the client...
+        client.close(); 
+         
+        
 
 **You have a use example at `test` folder**
 

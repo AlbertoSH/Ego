@@ -3,6 +3,7 @@ package com.github.albertosh.ego;
 import com.github.albertosh.ego.generator.builder.BuilderGenerator;
 import com.github.albertosh.ego.generator.codec.CodecGenerator;
 import com.github.albertosh.ego.generator.create.CreateGenerator;
+import com.github.albertosh.ego.generator.filter.FilterFieldGenerator;
 import com.github.albertosh.ego.generator.read.ReadGenerator;
 import com.sun.source.util.Trees;
 import com.sun.tools.javac.processing.JavacProcessingEnvironment;
@@ -31,6 +32,7 @@ public class EgoCompiler extends AbstractProcessor {
     private BuilderGenerator builderGenerator;
     private ReadGenerator readGenerator;
     private CreateGenerator createGenerator;
+    private FilterFieldGenerator filterFieldGenerator;
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -52,6 +54,8 @@ public class EgoCompiler extends AbstractProcessor {
         );
         readGenerator = new ReadGenerator(messager, filer);
         createGenerator = new CreateGenerator(messager, filer);
+        filterFieldGenerator = new FilterFieldGenerator(messager, filer);
+
     }
 
     @Override
@@ -67,6 +71,7 @@ public class EgoCompiler extends AbstractProcessor {
             builderGenerator.generate(classElement);
             readGenerator.generate(classElement);
             createGenerator.generate(classElement);
+            filterFieldGenerator.generate(classElement);
         }
 
         return true;

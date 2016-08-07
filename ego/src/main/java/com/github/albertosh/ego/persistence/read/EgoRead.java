@@ -1,6 +1,7 @@
 package com.github.albertosh.ego.persistence.read;
 
 import com.github.albertosh.ego.EgoObject;
+import com.github.albertosh.ego.persistence.filter.Filter;
 import com.mongodb.Block;
 import com.mongodb.MongoClient;
 import com.mongodb.client.FindIterable;
@@ -39,7 +40,7 @@ public abstract class EgoRead<T extends EgoObject>
     protected abstract String getCollectionName();
 
     @Override
-    public Optional<T> read(String id) {
+    public final Optional<T> read(String id) {
         MongoCollection<T> collection = getCollection();
 
         FindIterable<T> iterable = collection
@@ -51,10 +52,21 @@ public abstract class EgoRead<T extends EgoObject>
     }
 
     @Override
-    public List<T> read() {
+    public final List<T> read() {
         MongoCollection<T> collection = getCollection();
 
         FindIterable<T> iterable = collection.find();
+
+        List<T> result = new ArrayList<>();
+        iterable.forEach((Block<T>) result::add);
+        return result;
+    }
+
+    @Override
+    public final List<T> read(Filter<T> filter) {
+        MongoCollection<T> collection = getCollection();
+
+        FindIterable<T> iterable = collection.find(filter.getBsonFilter());
 
         List<T> result = new ArrayList<>();
         iterable.forEach((Block<T>) result::add);

@@ -6,7 +6,7 @@ import javax.lang.model.element.TypeElement;
 
 public class CreateGenerator {
 
-    public final static String CREATE_SUFFIX = "EgoCreate";
+    public final static String CREATE_SUFFIX = "Create";
 
     private final CreateInterfaceGenerator createInterfaceGenerator;
     private final CreateImplementationGenerator createImplementationGenerator;

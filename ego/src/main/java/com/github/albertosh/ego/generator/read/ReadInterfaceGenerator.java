@@ -24,11 +24,6 @@ class ReadInterfaceGenerator extends EgoInterfaceGenerator {
     }
 
     @Override
-    protected String getPrefix() {
-        return "I";
-    }
-
-    @Override
     protected String getSuffix() {
         return READ_SUFFIX;
     }
@@ -45,6 +40,5 @@ class ReadInterfaceGenerator extends EgoInterfaceGenerator {
 
         currentTypeSpec.addSuperinterface(interfaceType);
     }
-
 
 }

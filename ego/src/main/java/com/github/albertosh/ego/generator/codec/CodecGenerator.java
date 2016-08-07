@@ -37,7 +37,7 @@ import javax.lang.model.util.Types;
 
 public class CodecGenerator extends EgoClassGenerator {
 
-    private final String CODEC_SUFFIX = "EgoCodec";
+    private final String CODEC_SUFFIX = "Codec";
     private final String CODEC_PACKAGE_SUFFIX = ".codecs";
 
     private final Types types;
@@ -54,7 +54,7 @@ public class CodecGenerator extends EgoClassGenerator {
 
     @Override
     protected void doGenerate(TypeElement classElement) {
-        currentBuilderTypeName = ClassName.get(currentPackage, currentClassElement.getSimpleName() + BuilderGenerator.BUILDER_CLASS_SUFIX);
+        currentBuilderTypeName = ClassName.get(currentPackage + ".builder", currentClassElement.getSimpleName() + "Ego" + BuilderGenerator.BUILDER_CLASS_SUFIX);
 
         setClassHeader();
         addGetEncoderClassMethod();

@@ -35,7 +35,7 @@ public abstract class EgoGenerator {
 
     public final void generate(TypeElement classElement) {
         currentClassElement = classElement;
-        currentTypeSpec = getTypeSpecBuilder().apply(getPrefix() + classElement.getSimpleName() + getSuffix());
+        currentTypeSpec = getTypeSpecBuilder().apply(getPrefix() + classElement.getSimpleName() + "Ego" + getSuffix());
         currentClassTypeName = TypeName.get(currentClassElement.asType());
         currentPackage = ((PackageElement) currentClassElement.getEnclosingElement()).getQualifiedName().toString();
 

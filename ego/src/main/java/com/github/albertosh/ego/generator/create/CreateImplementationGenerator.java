@@ -43,10 +43,10 @@ class CreateImplementationGenerator extends EgoClassGenerator {
         currentTypeSpec.addSuperinterface(ClassName.get(
                 currentPackage
                 + getPackageSuffix(),
-                "I" + currentClassElement.getSimpleName().toString() + getSuffix()
+                "I" + currentClassElement.getSimpleName().toString() + "Ego" + getSuffix()
         ));
 
-        ClassName currentBuilderTypeName = ClassName.get(currentPackage, currentClassElement.getSimpleName() + BuilderGenerator.BUILDER_CLASS_SUFIX);
+        ClassName currentBuilderTypeName = ClassName.get(currentPackage + ".builder", currentClassElement.getSimpleName() + "Ego" + BuilderGenerator.BUILDER_CLASS_SUFIX);
         ParameterizedTypeName currentBuilderParameterizedTypeName = ParameterizedTypeName.get(currentBuilderTypeName, currentClassTypeName);
         ParameterizedTypeName interfaceType = ParameterizedTypeName.get(ClassName.get(EgoCreate.class), currentClassTypeName, currentBuilderParameterizedTypeName);
 

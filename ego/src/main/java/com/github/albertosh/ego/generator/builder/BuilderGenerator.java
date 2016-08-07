@@ -45,9 +45,9 @@ import javax.lang.model.util.Types;
 
 public class BuilderGenerator extends EgoClassGenerator {
 
-    public final static String BUILDER_CLASS_SUFIX = "EgoBuilder";
+    public final static String BUILDER_CLASS_SUFIX = "Builder";
 
-    private final static String BUILDER_PACKAGE_SUFIX = "";
+    private final static String BUILDER_PACKAGE_SUFIX = ".builder";
     private final Trees trees;
     private final TreeMaker make;
     private final Names names;
@@ -76,11 +76,6 @@ public class BuilderGenerator extends EgoClassGenerator {
     }
 
     @Override
-    protected String getPrefix() {
-        return "";
-    }
-
-    @Override
     protected String getSuffix() {
         return BUILDER_CLASS_SUFIX;
     }
@@ -91,7 +86,7 @@ public class BuilderGenerator extends EgoClassGenerator {
             TypeElement currentClass = pendingClasses.get(i);
             if (classExtendsEgoObject(currentClass) || superBuilderHasBeenAlreadyGenerated(currentClass)) {
                 ClassName builderClass = generateBuilderForClass(currentClass);
-                injectConstructor(currentClass, builderClass);
+          //      injectConstructor(currentClass, builderClass);
                 pendingClasses.remove(i);
                 alreadyGeneratedClasses2Builder.put(TypeName.get(currentClass.asType()), builderClass);
                 int divider = pendingClasses.size();
@@ -100,10 +95,14 @@ public class BuilderGenerator extends EgoClassGenerator {
                 i = i % divider;
             } else {
                 // Skip this class. We'll try it again later
+                int oldI = i;
                 int divider = pendingClasses.size();
                 if (divider == 0)
                     divider = 1;
                 i = (i + 1) % divider;
+                if (i == oldI)
+                    // Try again in next step
+                    break;
             }
         }
     }
@@ -130,32 +129,26 @@ public class BuilderGenerator extends EgoClassGenerator {
     }
 
     private ClassName generateBuilderForClass(TypeElement currentClass) {
-        String builderName = currentClass.getSimpleName() + BUILDER_CLASS_SUFIX;
+        String builderName = currentClass.getSimpleName() + "Ego" + BUILDER_CLASS_SUFIX;
         String packageName = currentClass.getEnclosingElement().toString() + BUILDER_PACKAGE_SUFIX;
         ClassName builderClass = ClassName.bestGuess(packageName + "." + builderName);
 
         TypeName currentType = TypeName.get(currentClass.asType());
 
-        TypeSpec.Builder builder = TypeSpec.classBuilder(builderName)
-                .addModifiers(Modifier.PUBLIC)
-                .addAnnotation(
-                        AnnotationSpec.builder(Generated.class)
-                                .addMember("value", "\"Ego\"")
-                                .build())
+        currentTypeSpec
                 .addMethod(MethodSpec.constructorBuilder().addModifiers(Modifier.PUBLIC).build());
 
         if (classIsAbstract(currentClass))
-            builder.addModifiers(Modifier.ABSTRACT);
+            currentTypeSpec.addModifiers(Modifier.ABSTRACT);
 
         TypeVariableName typeVariableName = TypeVariableName.get("T", TypeName.get(currentClass.asType()));
-        builder.addTypeVariable(typeVariableName);
+        currentTypeSpec.addTypeVariable(typeVariableName);
         TypeName currentBuilderType = ParameterizedTypeName.get(builderClass, typeVariableName);
 
-        addSuperClass(builder, currentClass, typeVariableName);
+        addSuperClass(currentTypeSpec, currentClass, typeVariableName);
         //addSuperClass(builder, currentClass, TypeName.get(currentClass.asType()));
 
         MethodSpec.Builder fromPrototypeBuilder = MethodSpec.methodBuilder("fromPrototype")
-//                .addAnnotation(OverridingMethodsMustInvokeSuper.class)
                 .addModifiers(Modifier.PUBLIC)
                 .returns(currentBuilderType);
 
@@ -168,14 +161,16 @@ public class BuilderGenerator extends EgoClassGenerator {
                     .addStatement("super.fromPrototype(prototype)");
         }
 
-        addFields(currentClass, builder, fromPrototypeBuilder, currentBuilderType);
+        addFields(currentClass, currentTypeSpec, fromPrototypeBuilder, currentBuilderType);
 
         fromPrototypeBuilder.addStatement("return this");
-        builder.addMethod(fromPrototypeBuilder.build());
+        currentTypeSpec.addMethod(fromPrototypeBuilder.build());
 
         if (classIsNotAbstract(currentClass))
-            addBuildMethod(currentClass, builder, typeVariableName);
+            addBuildMethod(currentClass, currentTypeSpec, typeVariableName);
 
+        writeToFile();
+        /*
         TypeSpec builded = builder.build();
         JavaFile javaFile = JavaFile.builder(packageName, builded)
                 .build();
@@ -184,7 +179,7 @@ public class BuilderGenerator extends EgoClassGenerator {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
+*/
         return builderClass;
     }
 
@@ -295,20 +290,7 @@ public class BuilderGenerator extends EgoClassGenerator {
             Iterator<JCTree> iterator = classNode.getMembers().iterator();
             List<JCTree> members = new ArrayList<>();
             iterator.forEachRemaining((member) -> {
-                boolean addNode = true;
-                if (member instanceof JCTree.JCMethodDecl) {
-                    JCTree.JCMethodDecl method = (JCTree.JCMethodDecl) member;
-                    if (method.getName().equals(names.init)) {
-                        if (method.getParameters().length() == 0) {
-                            // Default constructor
-                            // Inject stuff so it compiles but becomes useless at runtime
-                            addNode = false;
-                            members.add(defaultConstructorFixedNode());
-                        }
-                    }
-                }
-                if (addNode)
-                    members.add(member);
+                members.add(member);
             });
             members.add(getConstructorNode(classNode));
             JCTree[] asArray = members.toArray(new JCTree[members.size()]);
@@ -316,51 +298,8 @@ public class BuilderGenerator extends EgoClassGenerator {
             result = classNode;
         }
 
-        private JCTree defaultConstructorFixedNode() {
-            JCTree.JCModifiers modifiers = make.Modifiers(2); // Private visibility
-
-            ListBuffer<JCTree.JCStatement> nullChecks = new ListBuffer<JCTree.JCStatement>();
-            ListBuffer<JCTree.JCStatement> assigns = new ListBuffer<JCTree.JCStatement>();
-            ListBuffer<JCTree.JCVariableDecl> params = new ListBuffer<JCTree.JCVariableDecl>();
-
-            addDefaultSuperInvocation(assigns);
-            throwException(assigns);
-
-            return make.MethodDef(modifiers, names.init,
-                    null, com.sun.tools.javac.util.List.<JCTree.JCTypeParameter>nil(), params.toList(), com.sun.tools.javac.util.List.<JCTree.JCExpression>nil(),
-                    make.Block(0L, nullChecks.appendList(assigns).toList()), null);
-        }
-
-        private void addDefaultSuperInvocation(ListBuffer<JCTree.JCStatement> assigns) {
-            JCTree.JCExpression builderParam = make.Literal("");
-            JCTree.JCIdent sup = make.Ident(names._super);
-            JCTree.JCMethodInvocation invocation = make.Apply(com.sun.tools.javac.util.List.nil(), sup, com.sun.tools.javac.util.List.of(builderParam));
-            JCTree.JCExpressionStatement exec = make.Exec(invocation);
-            assigns.append(exec);
-        }
-
-        private void throwException(ListBuffer<JCTree.JCStatement> assigns) {
-            JCTree.JCExpression textArg = make.Literal("This constructor is just for the compiler not to complain.\n" +
-                    "It\'s not intended to be used!");
-
-            JCTree.JCExpression javaPackage = make.Ident(names.fromString("java"));
-            JCTree.JCExpression javaLangPackage = make.Select(javaPackage, names.fromString("lang"));
-
-            com.sun.tools.javac.util.List<JCTree.JCExpression> typeArgs =
-                    com.sun.tools.javac.util.List
-                            .of(make.Select(javaLangPackage, names.fromString("String")));
-
-            JCTree.JCExpression clazz = make.Select(javaLangPackage, names.fromString("RuntimeException"));
-            com.sun.tools.javac.util.List<JCTree.JCExpression> args =
-                    com.sun.tools.javac.util.List.of(textArg);
-            JCTree.JCNewClass newClass = make.NewClass(null, typeArgs, clazz, args, null);
-            JCTree.JCThrow throwNode = make.Throw(newClass);
-            assigns.add(throwNode);
-        }
-
-
         private JCTree getConstructorNode(JCTree.JCClassDecl classNode) {
-            JCTree.JCModifiers modifiers = make.Modifiers(0); // Default visibility
+            JCTree.JCModifiers modifiers = make.Modifiers(1); // Public visibility
 
             ListBuffer<JCTree.JCStatement> nullChecks = new ListBuffer<JCTree.JCStatement>();
             ListBuffer<JCTree.JCStatement> assigns = new ListBuffer<JCTree.JCStatement>();

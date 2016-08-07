@@ -47,7 +47,7 @@ class ReadImplementationGenerator extends EgoClassGenerator {
         currentTypeSpec.addSuperinterface(ClassName.get(
                 currentPackage
                 + getPackageSuffix(),
-                "I" + currentClassElement.getSimpleName().toString() + getSuffix()
+                "I" + currentClassElement.getSimpleName().toString() + "Ego" + getSuffix()
         ));
 
         ParameterizedTypeName superType = ParameterizedTypeName.get(ClassName.get(EgoRead.class), currentClassTypeName);

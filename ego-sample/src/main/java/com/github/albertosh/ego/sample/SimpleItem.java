@@ -1,5 +1,6 @@
 package com.github.albertosh.ego.sample;
 
+import com.github.albertosh.ego.EgoIgnore;
 import com.github.albertosh.ego.EgoObject;
 
 public class SimpleItem extends EgoObject {
@@ -7,7 +8,9 @@ public class SimpleItem extends EgoObject {
     private String someString;
     private Integer someInteger;
     private Long someLong;
+    @EgoIgnore
     private Character someCharacter;
+    @EgoIgnore
     private Byte someByte;
     private Double someDouble;
     private Float someFloat;

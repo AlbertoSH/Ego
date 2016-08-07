@@ -24,7 +24,7 @@ public abstract class EgoClassGenerator extends EgoGenerator {
     }
 
     @Override
-    protected String getPrefix() {
+    protected final String getPrefix() {
         return "";
     }
 

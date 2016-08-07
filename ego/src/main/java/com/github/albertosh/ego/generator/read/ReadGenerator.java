@@ -6,7 +6,7 @@ import javax.lang.model.element.TypeElement;
 
 public class ReadGenerator {
 
-    public final static String READ_SUFFIX = "EgoRead";
+    public final static String READ_SUFFIX = "Read";
 
     private final ReadInterfaceGenerator readInterfaceGenerator;
     private final ReadImplementationGenerator readImplementationGenerator;

@@ -20,11 +20,6 @@ class CreateInterfaceGenerator extends EgoInterfaceGenerator {
     }
 
     @Override
-    protected String getPrefix() {
-        return "I";
-    }
-
-    @Override
     protected String getSuffix() {
         return CREATE_SUFFIX;
     }
@@ -37,7 +32,7 @@ class CreateInterfaceGenerator extends EgoInterfaceGenerator {
     }
 
     private void setClassHeader() {
-        ClassName currentBuilderTypeName = ClassName.get(currentPackage, currentClassElement.getSimpleName() + BuilderGenerator.BUILDER_CLASS_SUFIX);
+        ClassName currentBuilderTypeName = ClassName.get(currentPackage + ".builder", currentClassElement.getSimpleName() + "Ego" + BuilderGenerator.BUILDER_CLASS_SUFIX);
         ParameterizedTypeName currentBuilderParameterizedTypeName = ParameterizedTypeName.get(currentBuilderTypeName, currentClassTypeName);
         ParameterizedTypeName interfaceType = ParameterizedTypeName.get(ClassName.get(IEgoCreate.class), currentClassTypeName, currentBuilderParameterizedTypeName);
 

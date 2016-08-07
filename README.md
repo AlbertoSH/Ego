@@ -23,9 +23,9 @@ Operations supported:
 - Builder generation (**Done**)
 - Codec generation (Half done, working on it...)
 - Create class generation (**Done**)
-- Read class generation (**Done**, very simple though, it will be improved with filter and sort operations)
+- Read class generation (**Done**, TODO: add sort operations)
 - Delete class generation
-- Filter class generation
+- Filter class generation (**Done**)
 - Patch class generation
 - Update class generation
 

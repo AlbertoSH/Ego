@@ -86,7 +86,7 @@ public class BuilderGenerator extends EgoClassGenerator {
             TypeElement currentClass = pendingClasses.get(i);
             if (classExtendsEgoObject(currentClass) || superBuilderHasBeenAlreadyGenerated(currentClass)) {
                 ClassName builderClass = generateBuilderForClass(currentClass);
-          //      injectConstructor(currentClass, builderClass);
+                injectConstructor(currentClass, builderClass);
                 pendingClasses.remove(i);
                 alreadyGeneratedClasses2Builder.put(TypeName.get(currentClass.asType()), builderClass);
                 int divider = pendingClasses.size();
@@ -289,9 +289,7 @@ public class BuilderGenerator extends EgoClassGenerator {
 
             Iterator<JCTree> iterator = classNode.getMembers().iterator();
             List<JCTree> members = new ArrayList<>();
-            iterator.forEachRemaining((member) -> {
-                members.add(member);
-            });
+            iterator.forEachRemaining(members::add);
             members.add(getConstructorNode(classNode));
             JCTree[] asArray = members.toArray(new JCTree[members.size()]);
             classNode.defs = com.sun.tools.javac.util.List.from(asArray);

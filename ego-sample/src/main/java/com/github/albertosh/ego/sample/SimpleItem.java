@@ -2,6 +2,8 @@ package com.github.albertosh.ego.sample;
 
 import com.github.albertosh.ego.EgoIgnore;
 import com.github.albertosh.ego.EgoObject;
+import com.github.albertosh.ego.EgoObjectBuilder;
+import com.github.albertosh.ego.sample.builder.SimpleItemEgoBuilder;
 
 public class SimpleItem extends EgoObject {
 

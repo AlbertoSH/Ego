@@ -1,7 +1,6 @@
 package com.github.albertosh.ego.generator;
 
 import com.squareup.javapoet.AnnotationSpec;
-import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
@@ -18,7 +17,7 @@ import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
-public abstract class EgoGenerator {
+public abstract class EgoGenerator implements IEgoGenerator {
 
     private final Messager messager;
     private final Filer filer;
@@ -33,6 +32,7 @@ public abstract class EgoGenerator {
         this.filer = filer;
     }
 
+    @Override
     public final void generate(TypeElement classElement) {
         currentClassElement = classElement;
         currentTypeSpec = getTypeSpecBuilder().apply(getPrefix() + classElement.getSimpleName() + "Ego" + getSuffix());
@@ -66,7 +66,9 @@ public abstract class EgoGenerator {
 
     protected String getPackageSuffix() {
         return "." + getSuffix().toLowerCase();
-    };
+    }
+
+    ;
 
     protected void warning(String message) {
         messager.printMessage(

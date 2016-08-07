@@ -6,9 +6,6 @@ import com.github.albertosh.ego.persistence.filter.IFilterField;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
 
-import org.bson.codecs.CharacterCodec;
-import org.bson.codecs.Codec;
-
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
@@ -43,7 +40,7 @@ public class FilterFieldGenerator extends EgoEnumGenerator {
     }
 
     private void addFields() {
-        for (Element e: currentClassElement.getEnclosedElements()) {
+        for (Element e : currentClassElement.getEnclosedElements()) {
             if (e.getKind().isField() && (e.getAnnotation(EgoIgnore.class) == null)) {
                 addSingleField((VariableElement) e);
             }

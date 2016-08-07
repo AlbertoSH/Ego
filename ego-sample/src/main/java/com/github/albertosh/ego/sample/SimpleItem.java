@@ -10,9 +10,7 @@ public class SimpleItem extends EgoObject {
     private String someString;
     private Integer someInteger;
     private Long someLong;
-    @EgoIgnore
     private Character someCharacter;
-    @EgoIgnore
     private Byte someByte;
     private Double someDouble;
     private Float someFloat;

@@ -2,19 +2,11 @@ package com.github.albertosh.ego.persistence.create;
 
 import com.github.albertosh.ego.EgoObject;
 import com.github.albertosh.ego.EgoObjectBuilder;
-import com.mongodb.Block;
 import com.mongodb.MongoClient;
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
 import org.bson.types.ObjectId;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
-import static com.mongodb.client.model.Filters.eq;
 
 public abstract class EgoCreate<T extends EgoObject, B extends EgoObjectBuilder<T>>
         implements IEgoCreate<T, B> {

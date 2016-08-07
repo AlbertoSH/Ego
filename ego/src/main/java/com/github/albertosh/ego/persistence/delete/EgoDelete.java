@@ -1,28 +1,25 @@
-package com.github.albertosh.ego.persistence.read;
+package com.github.albertosh.ego.persistence.delete;
 
 import com.github.albertosh.ego.EgoObject;
 import com.github.albertosh.ego.persistence.filter.Filter;
-import com.mongodb.Block;
 import com.mongodb.MongoClient;
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.result.DeleteResult;
 
 import org.bson.types.ObjectId;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import static com.mongodb.client.model.Filters.eq;
 
-public abstract class EgoRead<T extends EgoObject>
-        implements IEgoRead<T> {
+public abstract class EgoDelete<T extends EgoObject>
+        implements IEgoDelete<T> {
 
     protected final MongoClient client;
     protected final String dbName;
 
-    public EgoRead(MongoClient client, String dbName) {
+    public EgoDelete(MongoClient client, String dbName) {
         this.client = client;
         this.dbName = dbName;
     }
@@ -40,36 +37,22 @@ public abstract class EgoRead<T extends EgoObject>
     protected abstract String getCollectionName();
 
     @Override
-    public final Optional<T> read(String id) {
+    public final Optional<T> delete(String id) {
         MongoCollection<T> collection = getCollection();
 
         T item = collection
-                .find(eq("_id", new ObjectId(id)))
-                .first();
+                .findOneAndDelete(eq("_id", new ObjectId(id)));
 
         return Optional.ofNullable(item);
     }
 
     @Override
-    public final List<T> read() {
+    public long delete(Filter<T> filter) {
         MongoCollection<T> collection = getCollection();
 
-        FindIterable<T> iterable = collection.find();
+        DeleteResult result = collection
+                .deleteMany(filter.getBsonFilter());
 
-        List<T> result = new ArrayList<>();
-        iterable.forEach((Block<T>) result::add);
-        return result;
+        return result.getDeletedCount();
     }
-
-    @Override
-    public final List<T> read(Filter<T> filter) {
-        MongoCollection<T> collection = getCollection();
-
-        FindIterable<T> iterable = collection.find(filter.getBsonFilter());
-
-        List<T> result = new ArrayList<>();
-        iterable.forEach((Block<T>) result::add);
-        return result;
-    }
-
 }

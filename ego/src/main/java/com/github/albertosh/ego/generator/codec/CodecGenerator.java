@@ -1,10 +1,10 @@
 package com.github.albertosh.ego.generator.codec;
 
 
-import com.github.albertosh.ego.generator.EgoClassGenerator;
 import com.github.albertosh.ego.EgoIgnore;
 import com.github.albertosh.ego.EgoObject;
 import com.github.albertosh.ego.EgoObjectBuilder;
+import com.github.albertosh.ego.generator.EgoClassGenerator;
 import com.github.albertosh.ego.generator.builder.BuilderGenerator;
 import com.github.albertosh.ego.persistence.codec.EgoCodec;
 import com.squareup.javapoet.ClassName;
@@ -27,7 +27,6 @@ import java.util.Optional;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -220,7 +219,6 @@ public class CodecGenerator extends EgoClassGenerator {
     }
 
 
-
     private void addDecodeCurrentField() {
         ParameterizedTypeName egoBuilderParameterized = ParameterizedTypeName.get(ClassName.get(EgoObjectBuilder.class), currentClassTypeName);
         TypeVariableName variableBuilder = TypeVariableName.get("B", egoBuilderParameterized);
@@ -291,7 +289,6 @@ public class CodecGenerator extends EgoClassGenerator {
             }
         }
         */
-
 
 
     private String getReaderMethodForType(String type) throws IllegalArgumentException {

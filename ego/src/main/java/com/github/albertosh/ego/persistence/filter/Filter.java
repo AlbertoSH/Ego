@@ -18,10 +18,6 @@ public class Filter<T extends EgoObject> {
 
     private final Bson bsonFilter;
 
-    public Bson getBsonFilter() {
-        return bsonFilter;
-    }
-
     public <FF extends IFilterField<T>> Filter(FF field, Object value) {
         this(FilterOperation.EQ, field, value);
     }
@@ -39,6 +35,10 @@ public class Filter<T extends EgoObject> {
 
     private Filter(FilterLogicOperation op, Bson... filters) {
         this.bsonFilter = op.applyOperation(filters);
+    }
+
+    public Bson getBsonFilter() {
+        return bsonFilter;
     }
 
     private <FF extends IFilterField<T>> Object transformObjectIfNecessary(FF field, Object value) {

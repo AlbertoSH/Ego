@@ -1,10 +1,12 @@
 package com.github.albertosh.ego.generator.create;
 
+import com.github.albertosh.ego.generator.IEgoGenerator;
+
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.TypeElement;
 
-public class CreateGenerator {
+public class CreateGenerator implements IEgoGenerator {
 
     public final static String CREATE_SUFFIX = "Create";
 
@@ -21,6 +23,7 @@ public class CreateGenerator {
         this.createImplementationGenerator = new CreateImplementationGenerator(messager, filer);
     }
 
+    @Override
     public void generate(TypeElement classElement) {
         createInterfaceGenerator.generate(classElement);
         createImplementationGenerator.generate(classElement);

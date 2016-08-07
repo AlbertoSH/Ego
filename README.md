@@ -1,14 +1,9 @@
 # Ego
 
 
-Compile time generated JavaORM for MongoDB — Edit
+Compile time generated Java ORM for MongoDB — Edit
 
 #### **Currently under development!!!**
-
-Operations supported:
-
-* Create
-* Read (quite simple, though)
 
 ## Overview
 
@@ -21,10 +16,10 @@ Operations supported:
 ###Must have:
 
 - Builder generation (**Done**)
-- Codec generation (Half done, working on it...)
+- Codec generation (Half done, working on it... Right now it supports primitive types, their boxed versions and `String`)
 - Create class generation (**Done**)
 - Read class generation (**Done**, TODO: add sort operations)
-- Delete class generation
+- Delete class generation (**Done**)
 - Filter class generation (**Done**)
 - Patch class generation
 - Update class generation
@@ -76,6 +71,7 @@ Operations supported:
         client.close(); 
          
         
+**NOTE:** This library **doesn't** handle your mongo daemon. You'll have to manage it (for example via `mongod`. And don't forgot to close it when you finish!)
 
 **You have a use example at `test` folder**
 

@@ -7,8 +7,11 @@ import com.github.albertosh.ego.EgoObjectBuilder;
 import com.github.albertosh.ego.generator.EgoClassGenerator;
 import com.github.albertosh.ego.generator.builder.BuilderGenerator;
 import com.github.albertosh.ego.persistence.codec.EgoCodec;
+import com.github.albertosh.ego.persistence.codec.LocalDateCodec;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
@@ -22,8 +25,10 @@ import org.bson.codecs.EncoderContext;
 
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
@@ -42,7 +47,8 @@ public class CodecGenerator extends EgoClassGenerator {
 
     private final Types types;
     private final Map<String, ClassName> superClassCodecMap;
-    protected TypeName currentBuilderTypeName;
+    private TypeName currentBuilderTypeName;
+    private Set<TypeName> constructorParameters;
 
     public CodecGenerator(Filer filer, Messager messager, Types typeUtils) {
         super(messager, filer);
@@ -55,6 +61,9 @@ public class CodecGenerator extends EgoClassGenerator {
     @Override
     protected void doGenerate(TypeElement classElement) {
         currentBuilderTypeName = ClassName.get(currentPackage + ".builder", currentClassElement.getSimpleName() + "Ego" + BuilderGenerator.BUILDER_CLASS_SUFIX);
+        constructorParameters = new HashSet<>();
+        MethodSpec.Builder constructorSpec = MethodSpec.constructorBuilder()
+                .addModifiers(Modifier.PUBLIC);
 
         setClassHeader();
         addGetEncoderClassMethod();
@@ -62,8 +71,31 @@ public class CodecGenerator extends EgoClassGenerator {
         addEncodeCurrentObject();
         addDecodeCurrentField();
 
+        MethodSpec.Builder finalConstructorSpec = constructorSpec;
+        constructorParameters.forEach(arg -> {
+            String className = arg.toString().replaceAll(".*\\.","");
+            StringBuilder argNameBuilder = new StringBuilder(className);
+            argNameBuilder.setCharAt(0, className.substring(0,1).toLowerCase().charAt(0));
+            String argName = argNameBuilder.toString();
+            finalConstructorSpec
+                    .addParameter(
+                            ParameterSpec.builder(
+                                    arg,
+                                    argName
+                            ).build())
+            .addStatement("this.$L = $L", argNameBuilder.toString(), argNameBuilder.toString());
+
+            currentTypeSpec
+                    .addField(
+                        FieldSpec.builder(
+                                arg, argName, Modifier.PRIVATE
+                        ).build());
+        });
+
+        currentTypeSpec.addMethod(constructorSpec.build());
         writeToFile();
 
+        constructorParameters = null;
         currentBuilderTypeName = null;
     }
 
@@ -182,9 +214,24 @@ public class CodecGenerator extends EgoClassGenerator {
         } catch (IllegalArgumentException e) {
             // Does not have direct writer operation
             String codec = selectCodecForClass(classType.toString());
+            addCodecDependencyToConstructor(classType.toString());
             encodeMethod.addStatement("context.encodeWithChildContext("
                     + codec
                     + ", writer, value.$L)", getMethod);
+        }
+    }
+
+    private void addCodecDependencyToConstructor(String codec) {
+        TypeName typeName = getCodecTypeForCodecName(codec);
+        constructorParameters.add(typeName);
+    }
+
+    private TypeName getCodecTypeForCodecName(String codec) {
+        switch (codec) {
+            case "java.time.LocalDate":
+                return ClassName.get(LocalDateCodec.class);
+            default:
+                throw new IllegalArgumentException("Could not find a codec type for codec name " + codec);
         }
     }
 

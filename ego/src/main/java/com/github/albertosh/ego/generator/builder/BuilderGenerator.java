@@ -147,14 +147,10 @@ public class BuilderGenerator extends EgoClassGenerator {
                 .addModifiers(Modifier.PUBLIC)
                 .returns(currentBuilderType);
 
-
         fromPrototypeBuilder.addParameter(currentType, "prototype");
 
-
-        if (classDoesNotExtendEgoObject(currentClass)) {
-            fromPrototypeBuilder
-                    .addStatement("super.fromPrototype(prototype)");
-        }
+        fromPrototypeBuilder
+                .addStatement("super.fromPrototype(prototype)");
 
         addFields(currentClass, currentTypeSpec, fromPrototypeBuilder, currentBuilderType);
 
@@ -165,16 +161,7 @@ public class BuilderGenerator extends EgoClassGenerator {
             addBuildMethod(currentClass, currentTypeSpec, typeVariableName);
 
         writeToFile();
-        /*
-        TypeSpec builded = builder.build();
-        JavaFile javaFile = JavaFile.builder(packageName, builded)
-                .build();
-        try {
-            javaFile.writeTo(filer);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-*/
+
         return builderClass;
     }
 

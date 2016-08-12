@@ -20,6 +20,7 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -173,10 +174,27 @@ public class CodecGenerator extends EgoClassGenerator {
 
     private void writeClassField(MethodSpec.Builder encodeMethod, VariableElement field, String getMethod) {
         ClassType classType = (ClassType) field.asType();
-        String writerMethod = getWriterMethodForType(classType.toString());
-        encodeMethod.addStatement("writer." + writerMethod + "("
-                + addModifiersForEncode(classType.toString())
-                + ")", getMethod);
+        try {
+            String writerMethod = getWriterMethodForType(classType.toString());
+            encodeMethod.addStatement("writer." + writerMethod + "("
+                    + addModifiersForEncode(classType.toString())
+                    + ")", getMethod);
+        } catch (IllegalArgumentException e) {
+            // Does not have direct writer operation
+            String codec = selectCodecForClass(classType.toString());
+            encodeMethod.addStatement("context.encodeWithChildContext("
+                    + codec
+                    + ", writer, value.$L)", getMethod);
+        }
+    }
+
+    private String selectCodecForClass(String klass) {
+        switch (klass) {
+            case "java.time.LocalDate":
+                return "localDateCodec";
+            default:
+                throw new IllegalArgumentException("Could not find a codec for class " + klass);
+        }
     }
 
     private String addModifiersForEncode(String type) {
@@ -259,37 +277,25 @@ public class CodecGenerator extends EgoClassGenerator {
 
     private void decodeField(MethodSpec.Builder decodeMethod, VariableElement field) {
         TypeMirror type = field.asType();
-        String readerMethod = getReaderMethodForType(type.toString());
         decodeMethod
-                .addStatement("case $S:", field.getSimpleName())
-                .addStatement("currentBuilder.$L("
-                        + addModifiersForDecode(type.toString(), readerMethod)
-                        + ")", field.getSimpleName())
+                .addStatement("case $S:", field.getSimpleName());
+        try {
+            String readerMethod = getReaderMethodForType(type.toString());
+            decodeMethod
+                    .addStatement("currentBuilder.$L("
+                            + addModifiersForDecode(type.toString(), readerMethod)
+                            + ")", field.getSimpleName());
+        } catch (IllegalArgumentException e) {
+            // Does not have direct writer operation
+            String codec = selectCodecForClass(type.toString());
+            decodeMethod
+                    .addStatement("currentBuilder.$L("
+                            + "$L.decode(reader, context)"
+                            + ")", field.getSimpleName(), codec);
+        }
+        decodeMethod
                 .addStatement("break");
     }
-
-        /*
-                // TODO
-        Optional<String> method = methodThatReturnsValue(field);
-        if (method.isPresent()) {
-            try {
-                PrimitiveType primitiveType = (PrimitiveType) field.asType();
-
-                encodeMethod
-                        .addStatement("writer.writeName($S)", field.getSimpleName());
-                writeField(encodeMethod, field, method.get());
-
-            } catch (ClassCastException e) {
-                encodeMethod
-                        .beginControlFlow("if (value.$L != null)", method.get())
-                        .addStatement("writer.writeName($S)", field.getSimpleName());
-                writeField(encodeMethod, field, method.get());
-                encodeMethod
-                        .endControlFlow();
-            }
-        }
-        */
-
 
     private String getReaderMethodForType(String type) throws IllegalArgumentException {
         switch (type) {

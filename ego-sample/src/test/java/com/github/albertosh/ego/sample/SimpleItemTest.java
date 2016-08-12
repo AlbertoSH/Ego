@@ -1,7 +1,9 @@
 package com.github.albertosh.ego.sample;
 
+import com.github.albertosh.ego.IdGenerator;
 import com.github.albertosh.ego.persistence.filter.Filter;
 import com.github.albertosh.ego.persistence.filter.FilterOperation;
+import com.github.albertosh.ego.persistence.patch.Patch;
 import com.github.albertosh.ego.sample.builder.SimpleItemEgoBuilder;
 import com.github.albertosh.ego.sample.codecs.SimpleItemEgoCodec;
 import com.github.albertosh.ego.sample.create.ISimpleItemEgoCreate;
@@ -9,6 +11,9 @@ import com.github.albertosh.ego.sample.create.SimpleItemEgoCreate;
 import com.github.albertosh.ego.sample.delete.ISimpleItemEgoDelete;
 import com.github.albertosh.ego.sample.delete.SimpleItemEgoDelete;
 import com.github.albertosh.ego.sample.filterfield.SimpleItemEgoFilterField;
+import com.github.albertosh.ego.sample.patch.ISimpleItemEgoPatch;
+import com.github.albertosh.ego.sample.patch.SimpleItemEgoPatch;
+import com.github.albertosh.ego.sample.patchfield.SimpleItemEgoPatchField;
 import com.github.albertosh.ego.sample.read.ISimpleItemEgoRead;
 import com.github.albertosh.ego.sample.read.SimpleItemEgoRead;
 import com.mongodb.MongoClient;
@@ -54,12 +59,12 @@ public class SimpleItemTest {
                 .build();
         client = new MongoClient("localhost:27017", options);
         // Sanity check
-        client.dropDatabase("ego");
+        client.dropDatabase(DB_NAME);
     }
 
     @After
     public void clean() {
-        client.dropDatabase("ego");
+        client.dropDatabase(DB_NAME);
         client.close();
         client = null;
     }
@@ -68,20 +73,22 @@ public class SimpleItemTest {
     public void storeAndRecover() throws Exception {
         ISimpleItemEgoCreate create = new SimpleItemEgoCreate(client, DB_NAME);
 
+        IdGenerator idGenerator = new IdGenerator();
+
         SimpleItemEgoBuilder itemBuilder = (SimpleItemEgoBuilder) new SimpleItemEgoBuilder()
                 .someString("foo")
                 .someInteger(2)
                 .someFloat(4.3f)
                 .someCharacter('p')
-                .id(new ObjectId().toString());
+                .id(idGenerator.generate());
         SimpleItem item = itemBuilder.build();
 
-        SimpleItem inserted = create.create(itemBuilder);
+        Optional<SimpleItem> inserted = create.create(itemBuilder);
 
-        assertThat(inserted, is(equalTo(inserted)));
+        assertThat(inserted.isPresent(), is(true));
+        assertThat(inserted.get(), is(equalTo(item)));
 
-
-        ISimpleItemEgoRead read = new SimpleItemEgoRead(client, "ego");
+        ISimpleItemEgoRead read = new SimpleItemEgoRead(client, DB_NAME);
 
         List<SimpleItem> recoveredList = read.read();
 
@@ -94,11 +101,13 @@ public class SimpleItemTest {
     public void recoverFiltered() throws Exception {
         ISimpleItemEgoCreate create = new SimpleItemEgoCreate(client, DB_NAME);
 
+        IdGenerator idGenerator = new IdGenerator();
+
         SimpleItemEgoBuilder itemBuilder1 = (SimpleItemEgoBuilder) new SimpleItemEgoBuilder()
                 .someInteger(1)
                 .someFloat(5f)
                 .someString("asdf")
-                .id(new ObjectId().toString());
+                .id(idGenerator.generate());
         SimpleItem item1 = itemBuilder1
                 .build();
         create.create(itemBuilder1);
@@ -107,7 +116,7 @@ public class SimpleItemTest {
                 .someInteger(2)
                 .someFloat(10f)
                 .someString("qwerty")
-                .id(new ObjectId().toString());
+                .id(idGenerator.generate());
         SimpleItem item2 = itemBuilder2
                 .build();
         create.create(itemBuilder2);
@@ -116,12 +125,12 @@ public class SimpleItemTest {
                 .someInteger(3)
                 .someFloat(50f)
                 .someString("foobar")
-                .id(new ObjectId().toString());
+                .id(idGenerator.generate());
         SimpleItem item3 = itemBuilder3
                 .build();
         create.create(itemBuilder3);
 
-        ISimpleItemEgoRead read = new SimpleItemEgoRead(client, "ego");
+        ISimpleItemEgoRead read = new SimpleItemEgoRead(client, DB_NAME);
 
 
         Filter<SimpleItem> filter = new Filter(SimpleItemEgoFilterField.SOME_INTEGER, 2);
@@ -143,7 +152,9 @@ public class SimpleItemTest {
     public void delete() throws Exception {
         ISimpleItemEgoCreate create = new SimpleItemEgoCreate(client, DB_NAME);
 
-        String item1Id = new ObjectId().toString();
+        IdGenerator idGenerator = new IdGenerator();
+
+        String item1Id = idGenerator.generate();
         SimpleItemEgoBuilder itemBuilder1 = (SimpleItemEgoBuilder) new SimpleItemEgoBuilder()
                 .someInteger(1)
                 .someFloat(5f)
@@ -153,7 +164,7 @@ public class SimpleItemTest {
                 .build();
         create.create(itemBuilder1);
 
-        String item2Id = new ObjectId().toString();
+        String item2Id = idGenerator.generate();
         SimpleItemEgoBuilder itemBuilder2 = (SimpleItemEgoBuilder) new SimpleItemEgoBuilder()
                 .someInteger(2)
                 .someFloat(10f)
@@ -163,7 +174,7 @@ public class SimpleItemTest {
                 .build();
         create.create(itemBuilder2);
 
-        String item3Id = new ObjectId().toString();
+        String item3Id = idGenerator.generate();
         SimpleItemEgoBuilder itemBuilder3 = (SimpleItemEgoBuilder) new SimpleItemEgoBuilder()
                 .someInteger(3)
                 .someFloat(50f)
@@ -173,11 +184,11 @@ public class SimpleItemTest {
                 .build();
         create.create(itemBuilder3);
 
-        ISimpleItemEgoRead read = new SimpleItemEgoRead(client, "ego");
+        ISimpleItemEgoRead read = new SimpleItemEgoRead(client, DB_NAME);
         List<SimpleItem> stored = read.read();
         assertThat(stored, hasSize(3));
 
-        ISimpleItemEgoDelete delete = new SimpleItemEgoDelete(client, "ego");
+        ISimpleItemEgoDelete delete = new SimpleItemEgoDelete(client, DB_NAME);
 
         Optional<SimpleItem> deleted = delete.delete(item1Id);
         assertThat(deleted.isPresent(), is(true));
@@ -194,4 +205,51 @@ public class SimpleItemTest {
         assertThat(stored, containsInAnyOrder(item2));
     }
 
+    @Test
+    public void patch() throws Exception {
+        ISimpleItemEgoCreate create = new SimpleItemEgoCreate(client, DB_NAME);
+
+        IdGenerator idGenerator = new IdGenerator();
+
+        String item1Id = idGenerator.generate();
+        SimpleItemEgoBuilder itemBuilder1 = (SimpleItemEgoBuilder) new SimpleItemEgoBuilder()
+                .someInteger(1)
+                .someFloat(5f)
+                .someString("asdf")
+                .id(item1Id);
+        SimpleItem item1 = itemBuilder1
+                .build();
+        create.create(itemBuilder1);
+
+        String item2Id = idGenerator.generate();
+        SimpleItemEgoBuilder itemBuilder2 = (SimpleItemEgoBuilder) new SimpleItemEgoBuilder()
+                .someInteger(2)
+                .someFloat(10f)
+                .someString("qwerty")
+                .id(item2Id);
+        SimpleItem item2 = itemBuilder2
+                .build();
+        create.create(itemBuilder2);
+
+
+        Filter filter = new Filter(SimpleItemEgoFilterField.SOME_INTEGER, 1);
+
+        Patch patch = new Patch(SimpleItemEgoPatchField.SOME_STRING, "bar foo");
+
+        ISimpleItemEgoPatch egoPatch = new SimpleItemEgoPatch(client, DB_NAME);
+
+        long result = egoPatch.patch(filter, patch);
+
+        assertThat(result, is(1L));
+
+        ISimpleItemEgoRead read = new SimpleItemEgoRead(client, DB_NAME);
+        Optional<SimpleItem> updated = read.read(item1Id);
+
+        assertThat(updated.isPresent(), is(true));
+        SimpleItem expected = new SimpleItemEgoBuilder()
+                .fromPrototype(item1)
+                .someString("bar foo")
+                .build();
+        assertThat(updated.get(), is(equalTo(expected)));
+    }
 }

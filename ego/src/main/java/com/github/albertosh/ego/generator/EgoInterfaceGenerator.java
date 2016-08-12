@@ -1,6 +1,5 @@
 package com.github.albertosh.ego.generator;
 
-import com.github.albertosh.ego.persistence.read.IEgoRead;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;

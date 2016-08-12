@@ -1,7 +1,6 @@
 package com.github.albertosh.ego.generator.read;
 
 import com.github.albertosh.ego.generator.EgoPersistenceClassGenerator;
-import com.github.albertosh.ego.persistence.create.EgoCreate;
 import com.github.albertosh.ego.persistence.read.EgoRead;
 
 import javax.annotation.processing.Filer;

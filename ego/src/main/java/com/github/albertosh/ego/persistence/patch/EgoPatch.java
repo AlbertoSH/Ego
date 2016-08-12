@@ -1,23 +1,19 @@
-package com.github.albertosh.ego.persistence.create;
+package com.github.albertosh.ego.persistence.patch;
 
 import com.github.albertosh.ego.EgoObject;
-import com.github.albertosh.ego.EgoObjectBuilder;
+import com.github.albertosh.ego.persistence.filter.Filter;
 import com.mongodb.MongoClient;
-import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.result.UpdateResult;
 
-import org.bson.types.ObjectId;
-
-import java.util.Optional;
-
-public abstract class EgoCreate<T extends EgoObject, B extends EgoObjectBuilder<T>>
-        implements IEgoCreate<T, B> {
+public abstract class EgoPatch<T extends EgoObject>
+        implements IEgoPatch<T> {
 
     protected final MongoClient client;
     protected final String dbName;
 
-    public EgoCreate(MongoClient client, String dbName) {
+    public EgoPatch(MongoClient client, String dbName) {
         this.client = client;
         this.dbName = dbName;
     }
@@ -35,20 +31,13 @@ public abstract class EgoCreate<T extends EgoObject, B extends EgoObjectBuilder<
     protected abstract String getCollectionName();
 
     @Override
-    public final Optional<T> create(B builder) {
+    public <F extends Filter<T>, P extends Patch<T>> long patch(F filter, P patch) {
         MongoCollection<T> collection = getCollection();
 
-        if (builder.getId() == null)
-            builder.id(new ObjectId().toString());
+        UpdateResult result = collection
+                .updateMany(filter.getBsonFilter(), patch.getBsonUpdate());
 
-        T item = builder.build();
-
-        try {
-            collection.insertOne(item);
-
-            return Optional.of(item);
-        } catch (MongoException e) {
-            return Optional.empty();
-        }
+        return result.getModifiedCount();
     }
+
 }

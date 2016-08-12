@@ -6,6 +6,8 @@ import com.github.albertosh.ego.generator.codec.CodecGenerator;
 import com.github.albertosh.ego.generator.create.CreateGenerator;
 import com.github.albertosh.ego.generator.delete.DeleteGenerator;
 import com.github.albertosh.ego.generator.filter.FilterFieldGenerator;
+import com.github.albertosh.ego.generator.patch.PatchFieldGenerator;
+import com.github.albertosh.ego.generator.patch.PatchGenerator;
 import com.github.albertosh.ego.generator.read.ReadGenerator;
 import com.sun.source.util.Trees;
 import com.sun.tools.javac.processing.JavacProcessingEnvironment;
@@ -56,12 +58,17 @@ public class EgoCompiler extends AbstractProcessor {
         CreateGenerator createGenerator = new CreateGenerator(messager, filer);
         FilterFieldGenerator filterFieldGenerator = new FilterFieldGenerator(messager, filer);
         DeleteGenerator deleteGenerator = new DeleteGenerator(messager, filer);
+        PatchFieldGenerator patchFieldGenerator = new PatchFieldGenerator(messager, filer);
+        PatchGenerator patchGenerator = new PatchGenerator(messager, filer);
+
         generators.add(codecGenerator);
         generators.add(builderGenerator);
         generators.add(readGenerator);
         generators.add(createGenerator);
         generators.add(filterFieldGenerator);
         generators.add(deleteGenerator);
+        generators.add(patchFieldGenerator);
+        generators.add(patchGenerator);
     }
 
     @Override

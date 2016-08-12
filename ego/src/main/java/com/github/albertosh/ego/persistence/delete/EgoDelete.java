@@ -24,7 +24,7 @@ public abstract class EgoDelete<T extends EgoObject>
         this.dbName = dbName;
     }
 
-    private final MongoCollection<T> getCollection() {
+    private MongoCollection<T> getCollection() {
         MongoDatabase database = client.getDatabase(dbName);
 
         return database
@@ -47,7 +47,7 @@ public abstract class EgoDelete<T extends EgoObject>
     }
 
     @Override
-    public long delete(Filter<T> filter) {
+    public final long delete(Filter<T> filter) {
         MongoCollection<T> collection = getCollection();
 
         DeleteResult result = collection

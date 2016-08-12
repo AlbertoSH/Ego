@@ -1,6 +1,5 @@
 package com.github.albertosh.ego.generator;
 
-import com.github.albertosh.ego.persistence.delete.EgoDelete;
 import com.mongodb.MongoClient;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;

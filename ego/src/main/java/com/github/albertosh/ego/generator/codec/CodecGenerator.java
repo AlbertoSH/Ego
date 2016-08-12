@@ -6,6 +6,7 @@ import com.github.albertosh.ego.EgoObject;
 import com.github.albertosh.ego.EgoObjectBuilder;
 import com.github.albertosh.ego.generator.EgoClassGenerator;
 import com.github.albertosh.ego.generator.builder.BuilderGenerator;
+import com.github.albertosh.ego.persistence.codec.DurationCodec;
 import com.github.albertosh.ego.persistence.codec.EgoCodec;
 import com.github.albertosh.ego.persistence.codec.LocalDateCodec;
 import com.squareup.javapoet.ClassName;
@@ -226,22 +227,18 @@ public class CodecGenerator extends EgoClassGenerator {
         constructorParameters.add(typeName);
     }
 
-    private TypeName getCodecTypeForCodecName(String codec) {
-        switch (codec) {
-            case "java.time.LocalDate":
-                return ClassName.get(LocalDateCodec.class);
-            default:
-                throw new IllegalArgumentException("Could not find a codec type for codec name " + codec);
-        }
+    private TypeName getCodecTypeForCodecName(String fullClassName) {
+        String className = fullClassName.replaceAll(".*\\.","");
+        String codecClassName = className + "Codec";
+        String codecPackage = "com.github.albertosh.ego.persistence.codec";
+        return ClassName.bestGuess(codecPackage + "." + codecClassName);
     }
 
     private String selectCodecForClass(String klass) {
-        switch (klass) {
-            case "java.time.LocalDate":
-                return "localDateCodec";
-            default:
-                throw new IllegalArgumentException("Could not find a codec for class " + klass);
-        }
+        StringBuilder s = new StringBuilder(klass.replaceAll(".*\\.", ""));
+        s.setCharAt(0, Character.toLowerCase(s.charAt(0)));
+        s.append("Codec");
+        return s.toString();
     }
 
     private String addModifiersForEncode(String type) {

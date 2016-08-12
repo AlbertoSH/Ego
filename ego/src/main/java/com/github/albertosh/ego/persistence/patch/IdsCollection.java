@@ -18,7 +18,7 @@ import java.util.stream.Stream;
  * Utility class. It delegates every task on an inner {@see List} Used for patch operations when a
  * collection of ids is required
  */
-class IdsCollection implements Collection<ObjectId> {
+public class IdsCollection implements Collection<ObjectId> {
 
     private final List<ObjectId> delegate = new ArrayList<>();
 

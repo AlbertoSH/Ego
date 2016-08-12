@@ -2,18 +2,25 @@ package com.github.albertosh.ego.sample;
 
 import com.github.albertosh.ego.EgoObject;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class ForTesting extends EgoObject {
 
-    private LocalDate date;
+    private LocalDate localDate;
+    private Duration duration;
+    private LocalDateTime localDateTime;
 
-    public LocalDate getDate() {
-        return date;
+    public LocalDate getLocalDate() {
+        return localDate;
     }
 
-    public ForTesting setDate(LocalDate date) {
-        this.date = date;
-        return this;
+    public Duration getDuration() {
+        return duration;
+    }
+
+    public LocalDateTime getLocalDateTime() {
+        return localDateTime;
     }
 }
